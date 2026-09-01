@@ -1,0 +1,147 @@
+:root {
+  --color-semantic-backgroundcolor-backgrounddefault: var(--color-primitive-mutedblue-muted-500);
+  --color-semantic-backgroundcolor-backgroundim: var(--color-primitive-mutedblue-muted-300);
+  --color-semantic-accent-accentprimary: var(--color-primitive-blue-blue-500);
+  --color-semantic-accent-accentsecondary: var(--color-primitive-blue-blue-300);
+  --color-semantic-text-textdark: var(--color-primitive-darkblue-darkblue-800);
+  --color-semantic-text-textlight: var(--color-primitive-darkblue-darkblue-300);
+  --color-semantic-boxshadow-boxshadowfxlight: var(--color-primitive-greyblue-greyblue-50);
+  --color-semantic-boxshadow-boxshadowfxdark: var(--color-primitive-greyblue-greyblue-500);
+  --color-semantic-primarycolor-primary: var(--color-primitive-oceanblue-oceanblue-500);
+  --color-semantic-primarycolor-secondary: var(--color-primitive-oceanblue-oceanblue-200);
+  --color-semantic-primarycolor-tertiary: var(--color-primitive-oceanblue-oceanblue-800);
+  --color-semantic-backgroundcolor-backgrounddimmer: var(--color-primitive-mutedblue-muted-100);
+
+  --color-primitive-blue-blue-900: #092a51;
+  --color-primitive-blue-blue-700: #0f4888;
+  --color-primitive-blue-blue-600: #135caf;
+  --color-primitive-blue-blue-800: #0c386a;
+  --color-primitive-blue-blue-400: #4484cd;
+  --color-primitive-blue-blue-200: #93b8e2;
+  --color-primitive-blue-blue-100: #b6cfeb;
+  --color-primitive-blue-blue-300: #6298d5;
+  --color-primitive-blue-blue-500: #1565c0;
+  --color-primitive-blue-blue-50: #e8f0f9;
+
+  --color-primitive-darkblue-darkblue-900: #0a1018;
+  --color-primitive-darkblue-darkblue-700: #111b29;
+  --color-primitive-darkblue-darkblue-600: #162335;
+  --color-primitive-darkblue-darkblue-50: #e8e9eb;
+  --color-primitive-darkblue-darkblue-400: #465161;
+  --color-primitive-darkblue-darkblue-300: #646e7b;
+  --color-primitive-darkblue-darkblue-800: #0d1520;
+  --color-primitive-darkblue-darkblue-200: #959ba4;
+  --color-primitive-darkblue-darkblue-500: #18263a;
+  --color-primitive-darkblue-darkblue-100: #b7bcc2;
+
+  --color-primitive-greyblue-greyblue-800: #5e5f70;
+  --color-primitive-greyblue-greyblue-600: #9b9dba;
+  --color-primitive-greyblue-greyblue-500: #aaaccc;
+  --color-primitive-greyblue-greyblue-300: #c6c7dd;
+  --color-primitive-greyblue-greyblue-200: #d8d9e8;
+  --color-primitive-greyblue-greyblue-400: #bbbdd6;
+  --color-primitive-greyblue-greyblue-900: #474856;
+  --color-primitive-greyblue-greyblue-700: #797a91;
+  --color-primitive-greyblue-greyblue-100: #e5e5ef;
+  --color-primitive-greyblue-greyblue-50: #f7f7fa;
+
+  --color-primitive-oceanblue-oceanblue-900: #003f46;
+  --color-primitive-oceanblue-oceanblue-800: #00535c;
+  --color-primitive-oceanblue-oceanblue-700: #006b77;
+  --color-primitive-oceanblue-oceanblue-400: #33acb9;
+  --color-primitive-oceanblue-oceanblue-300: #54b9c4;
+  --color-primitive-oceanblue-oceanblue-500: #0097a7;
+  --color-primitive-oceanblue-oceanblue-200: #8acfd7;
+  --color-primitive-oceanblue-oceanblue-100: #b0dfe4;
+  --color-primitive-oceanblue-oceanblue-600: #008998;
+  --color-primitive-oceanblue-oceanblue-50: #e6f5f6;
+
+  --color-primitive-mutedblue-muted-800: #7a7c81;
+  --color-primitive-mutedblue-muted-700: #9da0a6;
+  --color-primitive-mutedblue-muted-500: #dde2ea;
+  --color-primitive-mutedblue-muted-900: #5d5f62;
+  --color-primitive-mutedblue-muted-300: #e8ecf1;
+  --color-primitive-mutedblue-muted-600: #c9ced5;
+  --color-primitive-mutedblue-muted-400: #e4e8ee;
+  --color-primitive-mutedblue-muted-200: #eff2f5;
+  --color-primitive-mutedblue-muted-100: #f4f6f8;
+  --color-primitive-mutedblue-muted-50: #fcfcfd;
+
+  --dropshadow-extruded-softelevation-medium-shadowoffset: 6px;
+  --dropshadow-extruded-softelevation-medium-blur: 6px;
+  --dropshadow-extruded-softelevation-medium-lightoffset: -6px;
+
+  --dropshadow-extrudedout-softelevation-large-shadowoffset: 12px;
+  --dropshadow-extrudedout-softelevation-large-lightoffset: -12px;
+  --dropshadow-extrudedout-softelevation-large-blur: 12px;
+
+  --dropshadow-extrudedflat-softelevation-flat-shadowoffset: 3px;
+  --dropshadow-extrudedflat-softelevation-flat-lightoffset: -3px;
+  --dropshadow-extrudedflat-softelevation-flat-blur: 3px;
+
+  --dropshadow-inset-softelevation-medium-shadowoffset: -6px;
+  --dropshadow-inset-softelevation-medium-lightoffset: 6px;
+  --dropshadow-inset-softelevation-medium-blur: 6px;
+
+  --dropshadow-insetin-softelevation-medium-lightoffset: 12px;
+  --dropshadow-insetin-softelevation-medium-shadowoffset: -12px;
+  --dropshadow-insetin-softelevation-medium-blur: 12px;
+
+  --radius-radius-smallest: 6px;
+  --radius-radius-small: 12px;
+  --radius-radius-medium: 16px;
+  --radius-radius-full: 9999px;
+  --radius-radius-large: 24px;
+  --radius-radius-larger: 32px;
+
+  --typography-fontfamilies-maincondensed: "IBM Plex Sans Condensed";
+  --typography-fontfamilies-mainserif: var(--font-plex-serif, "IBM Plex Serif");
+  --typography-fontfamilies-mainsans: var(--font-plex-sans, "IBM Plex Sans");
+  --typography-fontfamilies-mainmono: var(--font-plex-mono, "IBM Plex Mono");
+  
+  --typography-fontweights-bold: 700;
+  --typography-fontweights-semibold: 600;
+  --typography-fontweights-regular: 400;
+  --typography-fontweights-regular-italic: 400;
+  --typography-fontweights-semibold-italic: 600;
+  --typography-fontweights-bold-italic: 700;
+
+  --typography-fontsizes-display: 48px;
+  --typography-fontsizes-heading: 32px;
+  --typography-fontsizes-subheading: 24px;
+  --typography-fontsizes-subtitle: 20px;
+  --typography-fontsizes-body: 16px;
+  --typography-fontsizes-caption: 12px;
+  --typography-fontsizes-buttons: 16px;
+
+  --typography-lineheights-display-heading: 1.2;
+  --typography-lineheights-body-caption: 1.5;
+  --typography-lineheights-default: 1.5;
+
+  --typography-letterspacing-default: 0px;
+  --typography-letterspacing-badge: -1px;
+
+  --opacity-low: 0.1;
+  --opacity-md: 0.5;
+  --opacity-high: 0.9;
+
+  --color-primitive-general-succes: #4caf50;
+  --color-primitive-general-error: #f44336;
+  --color-primitive-general-warning: #ff9800;
+  --color-primitive-general-info: #2196f3;
+  --color-primitive-general-succes-2: #4caf50;
+  --color-primitive-general-error-2: #f44336;
+  --color-primitive-general-warning-2: #ff9800;
+  --color-primitive-general-info-2: #2196f3;
+  --color-primitive-general-succes-3: #357e38;
+  --color-primitive-general-error-3: #c5463d;
+  --color-primitive-general-warning-3: #b77e29;
+  --color-primitive-general-info-3: #2170ae;
+
+  --strokewidth-min: 1px;
+  --strokewidth-md: 2px;
+  --strokewidth-max: 4px;
+  --spacing-min: 4px;
+  --spacing-md: 16px;
+  --spacing-max: 32px;
+}

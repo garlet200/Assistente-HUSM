@@ -1,0 +1,135 @@
+.button {
+  border: none;
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  color: var(--color-semantic-text-textdark);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-radius-small);
+  box-shadow: var(--shadow-extruded-flat);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.button:hover {
+  box-shadow: var(--shadow-extruded-large);
+}
+
+.button:active {
+  box-shadow: var(--shadow-inset-medium);
+  transform: translateY(1px);
+}
+
+.button.primary {
+  color: var(--color-semantic-accent-accentprimary);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: var(--shadow-extruded-flat);
+}
+
+.menuItem {
+  border: none;
+  background-color: transparent;
+  color: var(--color-semantic-text-textdark);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: var(--radius-radius-small);
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.menuItem:active {
+  box-shadow: var(--shadow-inset-medium);
+}
+
+.card {
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border-radius: var(--radius-radius-medium);
+  box-shadow: var(--shadow-extruded-large);
+  padding: 24px;
+}
+
+.cardInset {
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border-radius: var(--radius-radius-medium);
+  box-shadow: var(--shadow-inset-medium);
+  padding: 24px;
+}
+
+.inputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  width: 100%;
+}
+
+.label {
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-weight: 500;
+  color: var(--color-semantic-text-textdark);
+  font-size: 0.9rem;
+}
+
+.input {
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border: none;
+  border-radius: var(--radius-radius-small);
+  box-shadow: var(--shadow-inset-medium);
+  padding: 12px 16px;
+  color: var(--color-semantic-text-textdark);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: box-shadow 0.2s ease-in-out;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  box-shadow: var(--shadow-inset-medium);
+  outline: 2px solid var(--color-semantic-text-textlight);
+}
+
+.input::placeholder {
+  color: var(--color-semantic-text-textlight);
+}
+
+.inputPill {
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border: none;
+  border-radius: 9999px;
+  box-shadow: var(--shadow-inset-medium);
+  padding: 16px 24px;
+  color: var(--color-semantic-text-textdark);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: box-shadow 0.2s ease-in-out;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inputPill:focus {
+  box-shadow: var(--shadow-inset-medium);
+  outline: 2px solid var(--color-semantic-text-textlight);
+}
+
+.inputPill::placeholder {
+  color: var(--color-semantic-text-textlight);
+}

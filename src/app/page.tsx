@@ -1,69 +1,178 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { createClient } from '@/lib/supabase/client';
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+  const router = useRouter();
+  const { user, loading, completeOnboarding } = useAuth();
+  const supabase = createClient();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState<'student' | 'doctor'>('student');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.hasCompletedOnboarding) {
+        router.push('/chat');
+      }
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>Carregando...</main>;
+  }
+
+  if (user && !user.hasCompletedOnboarding) {
+    return (
+      <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', flex: 1, justifyContent: 'center' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: 'calc(var(--spacing-md) * 1.5)' }}>Diretrizes Éticas do HUSM</h1>
+        <Card variant="out">
+          <p style={{ marginBottom: 'var(--spacing-md)', lineHeight: '1.6' }}>
+            Bem-vindo, {user.name}. O MedHUSM é um assistente de raciocínio clínico. 
+            <strong> Lembre-se:</strong> a inteligência artificial aprimora, mas nunca substitui o julgamento médico.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-min) * 2)', marginBottom: 'calc(var(--spacing-md) * 1.5)' }}>
+            <li>Não insira dados identificáveis (nomes, CPFs) de pacientes reais.</li>
+            <li>Todas as respostas geradas devem ser verificadas usando o RAG ou literatura oficial.</li>
+            <li>O sistema monitora casos para fins educacionais e de auditoria.</li>
+          </ul>
+        </Card>
+        <Button variant="primary" onClick={() => {
+          completeOnboarding();
+        }}>
+          Li e Concordo com os Termos
+        </Button>
       </main>
-    </div>
+    );
+  }
+
+  if (user) {
+    return null; // Will redirect in useEffect
+  }
+
+  const handleAuth = async () => {
+    setAuthLoading(true);
+    setAuthError('');
+    
+    if (isSignUp) {
+      if (!name) {
+        setAuthError('Preencha seu nome.');
+        setAuthLoading(false);
+        return;
+      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+            hasCompletedOnboarding: false
+          }
+        }
+      });
+      if (error) setAuthError(error.message);
+      else setAuthError('Conta criada! Verifique seu email ou tente fazer login.');
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) setAuthError('Email ou senha inválidos.');
+    }
+    
+    setAuthLoading(false);
+  };
+
+  return (
+    <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', flex: 1, justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-max)' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-semantic-accent-accentprimary)' }}>MedHUSM</h1>
+        <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Assistente Clínico Inteligente</p>
+      </div>
+
+      <Card>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+          {isSignUp && (
+            <>
+              <Input 
+                label="Seu Nome" 
+                placeholder="Dr. Silva / Estudante João"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+              <div style={{ display: 'flex', gap: 'calc(var(--spacing-min) * 2)', marginTop: 'calc(var(--spacing-min) * 2)', marginBottom: 'calc(var(--spacing-min) * 2)' }}>
+                <Button 
+                  variant={role === 'student' ? 'primary' : 'default'} 
+                  onClick={() => setRole('student')}
+                  style={{ flex: 1 }}
+                >
+                  Estudante
+                </Button>
+                <Button 
+                  variant={role === 'doctor' ? 'primary' : 'default'} 
+                  onClick={() => setRole('doctor')}
+                  style={{ flex: 1 }}
+                >
+                  Profissional
+                </Button>
+              </div>
+            </>
+          )}
+          
+          <Input 
+            label="Email" 
+            placeholder="seu@email.com"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <Input 
+            label="Senha" 
+            placeholder="******"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {authError && (
+            <p style={{ color: 'var(--color-primitive-general-error)', fontSize: '0.875rem' }}>
+              {authError}
+            </p>
+          )}
+
+          <Button 
+            variant="primary" 
+            style={{ marginTop: 'var(--spacing-md)' }}
+            onClick={handleAuth}
+            disabled={!email || !password || authLoading}
+          >
+            {authLoading ? 'Processando...' : (isSignUp ? 'Criar Conta' : 'Entrar')}
+          </Button>
+
+          <Button
+            variant="default"
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setAuthError('');
+            }}
+          >
+            {isSignUp ? 'Já tenho uma conta (Entrar)' : 'Não tenho conta (Cadastrar)'}
+          </Button>
+        </div>
+      </Card>
+    </main>
   );
 }
