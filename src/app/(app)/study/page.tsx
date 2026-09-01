@@ -9,7 +9,7 @@ export default function StudyHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-  const [sessions, setSessions] = useState<Record<string, unknown>[]>([]);
+  const [sessions, setSessions] = useState<{id: string, title: string, updated_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   
   const loadSessions = async () => {

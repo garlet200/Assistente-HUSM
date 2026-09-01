@@ -9,7 +9,7 @@ export default function ChatHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-  const [chats, setChats] = useState<Record<string, unknown>[]>([]);
+  const [chats, setChats] = useState<{id: string, title: string, updated_at: string}[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
