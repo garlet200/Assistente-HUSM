@@ -240,7 +240,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'calc(var(--spacing-min) * 3)', padding: '16px 24px 0 24px', backgroundColor: 'transparent' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-ml)', padding: '16px 24px 0 24px', backgroundColor: 'transparent' }}>
         <button 
           onClick={enableEditMode}
           style={{
@@ -314,10 +314,10 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            padding: 'calc(var(--spacing-md) * 1.5)', 
+            padding: 'var(--spacing-lg)', 
             display: 'flex', 
             flexDirection: 'column', 
-            gap: 'calc(var(--spacing-md) * 1.5)'
+            gap: 'var(--spacing-lg)'
           }}>
           {fetchingHistory ? (
              <div style={{ textAlign: 'center', color: 'var(--color-semantic-text-textlight)', marginTop: '40px' }}>
@@ -326,7 +326,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
           ) : interactions.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--color-semantic-text-textlight)', marginTop: '40px' }}>
               <p>Descreva o caso clínico, sinais ou sintomas.</p>
-              <p style={{ fontSize: '0.875rem', marginTop: 'calc(var(--spacing-min) * 2)' }}>O roteador enviará para o modelo mais adequado (Free-First).</p>
+              <p style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-sm)' }}>O roteador enviará para o modelo mais adequado (Free-First).</p>
             </div>
           ) : (
             interactions.map((interaction) => (
@@ -337,7 +337,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                   backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)', 
                   borderRadius: '16px' 
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'calc(var(--spacing-min) * 2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-sm)' }}>
                     <div style={{ fontWeight: 600, color: 'var(--color-semantic-text-textdark)' }}>
                       {interaction.prompt}
                     </div>
@@ -367,10 +367,10 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                       
                       {interaction.citations && interaction.citations.length > 0 && (
                         <div style={{ marginTop: 'var(--spacing-md)', paddingTop: '12px' }}>
-                          <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: 'calc(var(--spacing-min) * 2)', color: 'var(--color-semantic-text-textlight)' }}>Fontes (RAG):</p>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'calc(var(--spacing-min) * 2)' }}>
+                          <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: 'var(--spacing-sm)', color: 'var(--color-semantic-text-textlight)' }}>Fontes (RAG):</p>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
                             {interaction.citations.map((cit, idx) => (
-                              <span key={idx} style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)', fontSize: '0.75rem', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', padding: 'var(--spacing-min) calc(var(--spacing-min) * 2)', borderRadius: '4px', border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)' }}>
+                              <span key={idx} style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)', fontSize: '0.75rem', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', padding: 'var(--spacing-min) var(--spacing-sm)', borderRadius: '4px', border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)' }}>
                                 {cit}
                               </span>
                             ))}
@@ -419,7 +419,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       </div>
 
       <footer className="chat-footer">
-        <div style={{ display: 'flex', gap: 'calc(var(--spacing-min) * 3)', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--spacing-ml)', alignItems: 'center' }}>
           <Input 
             pill
             placeholder="Descreva sua dúvida..." 

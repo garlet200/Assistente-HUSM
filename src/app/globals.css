@@ -56,6 +56,16 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  
+  /* Restrict max width for desktop to look like a mobile app */
+  max-width: 480px;
+  margin: 0 auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.05); /* Optional: add a subtle drop shadow on desktop */
+}
+
+/* Ensure html also has the background color so the sides aren't white */
+html {
+  background-color: var(--color-semantic-backgroundcolor-backgrounddimmer, #f0f0f0);
 }
 
 a {

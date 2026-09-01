@@ -26,7 +26,7 @@ export function TopBar() {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'space-between', 
-      padding: 'var(--spacing-md) calc(var(--spacing-md) * 1.5)', 
+      padding: 'var(--spacing-md) var(--spacing-lg)', 
       backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
       position: 'relative',
       zIndex: 50
@@ -97,11 +97,11 @@ export function TopBar() {
               position: 'absolute', 
               top: '56px', 
               right: '0', 
-              padding: 'calc(var(--spacing-min) * 3)', 
+              padding: 'var(--spacing-ml)', 
               width: '200px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 'calc(var(--spacing-min) * 2)',
+              gap: 'var(--spacing-sm)',
               zIndex: 100
             }}
           >

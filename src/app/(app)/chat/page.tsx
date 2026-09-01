@@ -9,7 +9,7 @@ export default function ChatHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-  const [chats, setChats] = useState<any[]>([]);
+  const [chats, setChats] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -48,10 +48,10 @@ export default function ChatHub() {
   if (!user) return null;
 
   return (
-    <div style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', height: '100%' }}>
+    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'calc(var(--spacing-min) * 2)' }}>Histórico Clínico</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>Histórico Clínico</h1>
           <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Acesse pesquisas anteriores ou inicie uma nova.</p>
         </div>
         
@@ -61,11 +61,11 @@ export default function ChatHub() {
             background: 'var(--color-semantic-accent-accentprimary)',
             border: 'none',
             borderRadius: '16px',
-            padding: 'calc(var(--spacing-min) * 3) calc(var(--spacing-md) * 1.5)',
-            boxShadow: 'var(--shadow-extruded-large)',
+            padding: 'var(--spacing-ml) var(--spacing-lg)',
+            boxShadow: 'var(--shadow-extruded-medium)',
             display: 'flex',
             alignItems: 'center',
-            gap: 'calc(var(--spacing-min) * 2)',
+            gap: 'var(--spacing-sm)',
             cursor: 'pointer',
             color: 'white',
             fontWeight: 600,
@@ -94,7 +94,7 @@ export default function ChatHub() {
                 background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                 border: 'none',
                 borderRadius: '16px',
-                padding: 'calc(var(--spacing-md) + var(--spacing-min))',
+                padding: 'var(--spacing-md-lg)',
                 boxShadow: 'var(--shadow-extruded-flat)',
                 display: 'flex',
                 justifyContent: 'space-between',

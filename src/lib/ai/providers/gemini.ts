@@ -14,7 +14,7 @@ export class GeminiProvider implements AIProvider {
   }
 
   async generate(request: AIRequest, modelId: string): Promise<AIResponse> {
-    const generationConfig: any = {};
+    const generationConfig: Record<string, unknown> = {};
     if (request.responseFormat === 'json') {
       generationConfig.responseMimeType = 'application/json';
     }
@@ -50,9 +50,9 @@ export class GeminiProvider implements AIProvider {
           modelId: modelId,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Gemini Provider Error:', error);
-      throw new Error(`Failed to generate content: ${error.message}`);
+      throw new Error(`Failed to generate content: ${(error as Error).message}`);
     }
   }
 }

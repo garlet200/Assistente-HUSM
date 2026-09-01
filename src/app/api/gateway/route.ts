@@ -13,10 +13,10 @@ export async function POST(request: Request) {
     const response = await orchestrator.processRequest(body);
     
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Gateway Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
+      { error: (error as Error).message || 'Internal Server Error' },
       { status: 500 }
     );
   }

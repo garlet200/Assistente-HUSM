@@ -30,19 +30,19 @@ export default function Home() {
   }, [user, loading, router]);
 
   if (loading) {
-    return <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>Carregando...</main>;
+    return <main style={{ padding: 'var(--spacing-lg)', display: 'flex', flex: 1, justifyContent: 'center', alignItems: 'center' }}>Carregando...</main>;
   }
 
   if (user && !user.hasCompletedOnboarding) {
     return (
-      <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', flex: 1, justifyContent: 'center' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: 'calc(var(--spacing-md) * 1.5)' }}>Diretrizes Éticas do HUSM</h1>
+      <main style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', flex: 1, justifyContent: 'center' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)' }}>Diretrizes Éticas do HUSM</h1>
         <Card variant="out">
           <p style={{ marginBottom: 'var(--spacing-md)', lineHeight: '1.6' }}>
             Bem-vindo, {user.name}. O MedHUSM é um assistente de raciocínio clínico. 
             <strong> Lembre-se:</strong> a inteligência artificial aprimora, mas nunca substitui o julgamento médico.
           </p>
-          <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-min) * 2)', marginBottom: 'calc(var(--spacing-md) * 1.5)' }}>
+          <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}>
             <li>Não insira dados identificáveis (nomes, CPFs) de pacientes reais.</li>
             <li>Todas as respostas geradas devem ser verificadas usando o RAG ou literatura oficial.</li>
             <li>O sistema monitora casos para fins educacionais e de auditoria.</li>
@@ -96,7 +96,7 @@ export default function Home() {
   };
 
   return (
-    <main style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', flex: 1, justifyContent: 'center' }}>
+    <main style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', flex: 1, justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-max)' }}>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: 'var(--color-semantic-accent-accentprimary)' }}>MedHUSM</h1>
         <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Assistente Clínico Inteligente</p>
@@ -112,7 +112,7 @@ export default function Home() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-              <div style={{ display: 'flex', gap: 'calc(var(--spacing-min) * 2)', marginTop: 'calc(var(--spacing-min) * 2)', marginBottom: 'calc(var(--spacing-min) * 2)' }}>
+              <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
                 <Button 
                   variant={role === 'student' ? 'primary' : 'default'} 
                   onClick={() => setRole('student')}

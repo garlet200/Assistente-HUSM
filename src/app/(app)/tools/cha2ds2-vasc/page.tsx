@@ -40,7 +40,7 @@ export default function Cha2ds2VascCalculator() {
   };
 
   return (
-    <div style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', height: '100%' }}>
+    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
         <button 
@@ -73,7 +73,7 @@ export default function Cha2ds2VascCalculator() {
           Execução 100% local no dispositivo. A IA não é necessária para cálculos determinísticos.
         </p>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-min) * 2)', marginBottom: 'var(--spacing-md)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
           {Object.entries({
             c: 'Insuficiência Cardíaca Congestiva (+1)',
             h: 'Hipertensão (+1)',
@@ -84,7 +84,7 @@ export default function Cha2ds2VascCalculator() {
             a: 'Idade 65-74 anos (+1)',
             sc: 'Sexo Feminino (+1)',
           }).map(([key, label]) => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 'calc(var(--spacing-min) * 2)' }}>
+            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
               <input 
                 type="checkbox" 
                 checked={calcState[key as keyof typeof calcState]}
@@ -100,7 +100,7 @@ export default function Cha2ds2VascCalculator() {
         {score !== null && (
           <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-md)', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', borderRadius: '8px', boxShadow: 'var(--shadow-extruded-flat)' }}>
             <h3 style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)' }}>Escore: {score}</h3>
-            <p style={{ fontSize: '0.875rem', marginTop: 'calc(var(--spacing-min) * 2)' }}>
+            <p style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-sm)' }}>
               {score === 0 ? 'Risco baixo (considerar não anticoagular).' : 
                score === 1 ? 'Risco moderado (considerar anticoagulação oral).' : 
                'Risco alto (anticoagulação oral recomendada).'}

@@ -21,7 +21,7 @@ export function MultipleChoiceQuestion({ question, options, onSelect, disabled }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', margin: '8px 0' }}>
       <p style={{ fontWeight: 600, fontFamily: 'var(--typography-fontfamilies-mainsans)' }}>{question}</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-min) * 3)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-ml)' }}>
         {options.map((option, index) => (
           <Button
             key={index}
@@ -31,7 +31,7 @@ export function MultipleChoiceQuestion({ question, options, onSelect, disabled }
             style={{
               justifyContent: 'flex-start',
               textAlign: 'left',
-              padding: 'calc(var(--spacing-min) * 3) var(--spacing-md)',
+              padding: 'var(--spacing-ml) var(--spacing-md)',
               fontFamily: 'var(--typography-fontfamilies-mainsans)',
               lineHeight: '1.4'
             }}

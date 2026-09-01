@@ -120,6 +120,13 @@
 
   --typography-letterspacing-default: 0px;
   --typography-letterspacing-badge: -1px;
+  --spacing-min: 4px;
+  --spacing-sm: 8px;
+  --spacing-ml: 12px;
+  --spacing-md: 16px;
+  --spacing-md-lg: 20px;
+  --spacing-lg: 24px;
+  --spacing-max: 32px;
 
   --opacity-low: 0.1;
   --opacity-md: 0.5;

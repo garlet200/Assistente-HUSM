@@ -53,7 +53,7 @@ export class AIOrchestrator {
     try {
       const response = await provider.generate(safeRequest, bestModel.id);
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(`Provider ${provider.name} falhou. Utilizando fallback local.`);
       return generateMockResponse(sanitizedPrompt);
     }

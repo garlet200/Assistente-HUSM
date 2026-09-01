@@ -28,6 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const mapSupabaseUserToLocal = (supabaseUser: SupabaseUser) => {
+    // Extract metadata set during signup
+    const metadata = supabaseUser.user_metadata || {};
+    setUser({
+      id: supabaseUser.id,
+      email: supabaseUser.email,
+      name: metadata.name || supabaseUser.email?.split('@')[0] || 'User',
+      role: metadata.role || 'student',
+      hasCompletedOnboarding: metadata.hasCompletedOnboarding || false,
+    });
+    setLoading(false);
+  };
+
   useEffect(() => {
     // Check active session
     const getSession = async () => {
@@ -54,20 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const mapSupabaseUserToLocal = (supabaseUser: SupabaseUser) => {
-    // Extract metadata set during signup
-    const metadata = supabaseUser.user_metadata || {};
-    setUser({
-      id: supabaseUser.id,
-      email: supabaseUser.email,
-      name: metadata.name || supabaseUser.email?.split('@')[0] || 'User',
-      role: metadata.role || 'student',
-      hasCompletedOnboarding: metadata.hasCompletedOnboarding || false,
-    });
-    setLoading(false);
-  };
 
   const logout = async () => {
     await supabase.auth.signOut();

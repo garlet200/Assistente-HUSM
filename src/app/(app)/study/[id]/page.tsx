@@ -33,21 +33,6 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
   const mainRef = useRef<HTMLElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/');
-    } else {
-      if (resolvedId !== 'new') {
-        sessionStorage.setItem('activeStudyId', resolvedId);
-        loadHistory(resolvedId);
-      }
-    }
-  }, [user, router, resolvedId]);
-
-  useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
   const loadHistory = async (dbChatId: string) => {
     const { data: chatData } = await supabase
       .from('chats')
@@ -79,6 +64,22 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     }
   };
 
+  useEffect(() => {
+    if (!user) {
+      router.push('/');
+    } else {
+      if (resolvedId !== 'new') {
+        sessionStorage.setItem('activeStudyId', resolvedId);
+        loadHistory(resolvedId);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, router, resolvedId]);
+
+  useEffect(() => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
   const handleTitleChange = async (newTitle: string) => {
     setChatTitle(newTitle);
     setIsEditingTitle(false);
@@ -94,7 +95,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     }, 50);
   };
 
-  const saveMessageToDB = async (role: string, content: string, metadata: any = {}) => {
+  const saveMessageToDB = async (role: string, content: string, metadata: Record<string, unknown> = {}) => {
     if (resolvedId === 'new') return null;
     const { data } = await supabase
       .from('messages')
@@ -109,7 +110,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     return data;
   };
 
-  const updateMessageMetadata = async (messageId: string, metadata: any) => {
+  const updateMessageMetadata = async (messageId: string, metadata: Record<string, unknown>) => {
     if (resolvedId === 'new') return;
     await supabase.from('messages').update({ metadata }).eq('id', messageId);
   };
@@ -238,7 +239,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) calc(var(--spacing-md) * 1.5) 0 calc(var(--spacing-md) * 1.5)', backgroundColor: 'transparent' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)', backgroundColor: 'transparent' }}>
         <button 
           onClick={enableEditMode}
           style={{
@@ -311,19 +312,19 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
           style={{ 
             flex: 1, 
             overflowY: 'auto', 
-            padding: 'calc(var(--spacing-md) * 1.5)', 
+            padding: 'var(--spacing-lg)', 
             display: 'flex', 
             flexDirection: 'column', 
-            gap: 'calc(var(--spacing-md) * 1.5)' 
+            gap: 'var(--spacing-lg)' 
           }}>
           {!topicSelected ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Selecione um Tema de Estudo</h2>
               <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center', maxWidth: '400px' }}>
                 Escolha uma das especialidades abaixo ou digite um tema específico para gerar um caso clínico focado.
               </p>
               
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'calc(var(--spacing-min) * 3)', justifyContent: 'center', maxWidth: '500px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-ml)', justifyContent: 'center', maxWidth: '500px' }}>
                 {['Cardiologia', 'Neurologia', 'Pediatria', 'Infectologia', 'Terapia Intensiva'].map(topic => (
                   <button
                     key={topic}
@@ -332,7 +333,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                     style={{
                       border: 'none',
                       borderRadius: '999px',
-                      padding: 'calc(var(--spacing-min) * 2) var(--spacing-md)',
+                      padding: 'var(--spacing-sm) var(--spacing-md)',
                       cursor: 'pointer',
                       color: 'var(--color-semantic-text-textdark)',
                       fontWeight: 500,
@@ -344,7 +345,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                 ))}
               </div>
 
-              <div style={{ display: 'flex', gap: 'calc(var(--spacing-min) * 3)', marginTop: 'var(--spacing-md)', width: '100%', maxWidth: '400px' }}>
+              <div style={{ display: 'flex', gap: 'var(--spacing-ml)', marginTop: 'var(--spacing-md)', width: '100%', maxWidth: '400px' }}>
                 <input 
                   type="text"
                   placeholder="Ou digite um tema (ex: Sepse)"
@@ -356,7 +357,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                     background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                     border: 'none',
                     borderRadius: '999px',
-                    padding: 'calc(var(--spacing-min) * 3) var(--spacing-md)',
+                    padding: 'var(--spacing-ml) var(--spacing-md)',
                     boxShadow: 'var(--shadow-inset-medium)',
                     color: 'var(--color-semantic-text-textdark)',
                     fontFamily: 'var(--typography-fontfamilies-mainsans)',
@@ -393,7 +394,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                 <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                   <div style={{ 
                     maxWidth: '90%', 
-                    padding: 'calc(var(--spacing-min) * 3) var(--spacing-md)', 
+                    padding: 'var(--spacing-ml) var(--spacing-md)', 
                     backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)', 
                     borderRadius: msg.role === 'model' ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
                     boxShadow: 'var(--shadow-extruded-flat)'
@@ -423,7 +424,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
               {loading && (
                 <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                   <div style={{ 
-                    padding: 'calc(var(--spacing-min) * 3) var(--spacing-md)', 
+                    padding: 'var(--spacing-ml) var(--spacing-md)', 
                     backgroundColor: 'transparent',
                     fontStyle: 'italic',
                     color: 'var(--color-semantic-text-textlight)'

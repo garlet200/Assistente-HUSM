@@ -46,14 +46,14 @@ export function BottomNav() {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
-      padding: 'calc(var(--spacing-min) * 2) var(--spacing-md)',
+      padding: 'var(--spacing-sm) var(--spacing-md)',
       margin: '0 24px 24px 24px',
       backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
-      boxShadow: 'var(--shadow-extruded-large)',
+      boxShadow: 'var(--shadow-extruded-medium)',
       borderRadius: '32px',
       position: 'relative',
       zIndex: 50,
-      gap: 'calc(var(--spacing-min) * 2)'
+      gap: 'var(--spacing-sm)'
     }}>
       {navItems.map((item) => {
         const isActive = pathname.startsWith(item.path);
@@ -83,7 +83,7 @@ export function BottomNav() {
             title={item.label}
             style={{
               flex: 1,
-              padding: 'calc(var(--spacing-min) * 3)',
+              padding: 'var(--spacing-ml)',
               fontSize: '0.875rem',
               color: isActive ? 'var(--color-semantic-accent-accentprimary)' : 'var(--color-semantic-text-textdark)',
               boxShadow: isActive ? 'var(--shadow-inset-medium)' : 'none',

@@ -9,18 +9,9 @@ export default function StudyHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    if (!user) {
-      router.push('/');
-    } else {
-      sessionStorage.removeItem('activeStudyId');
-      loadSessions();
-    }
-  }, [user, router]);
-
   const loadSessions = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -35,6 +26,15 @@ export default function StudyHub() {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/');
+    } else {
+      sessionStorage.removeItem('activeStudyId');
+      loadSessions();
+    }
+  }, [user, router]);
 
   const createNewSession = async () => {
     const { data, error } = await supabase
@@ -55,10 +55,10 @@ export default function StudyHub() {
   if (!user) return null;
 
   return (
-    <div style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', height: '100%' }}>
+    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'calc(var(--spacing-min) * 2)' }}>Sessões de Estudo</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>Sessões de Estudo</h1>
           <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Pratique raciocínio clínico com casos simulados.</p>
         </div>
         
@@ -68,11 +68,11 @@ export default function StudyHub() {
             background: 'var(--color-semantic-accent-accentprimary)',
             border: 'none',
             borderRadius: '16px',
-            padding: 'calc(var(--spacing-min) * 3) calc(var(--spacing-md) * 1.5)',
-            boxShadow: 'var(--shadow-extruded-large)',
+            padding: 'var(--spacing-ml) var(--spacing-lg)',
+            boxShadow: 'var(--shadow-extruded-medium)',
             display: 'flex',
             alignItems: 'center',
-            gap: 'calc(var(--spacing-min) * 2)',
+            gap: 'var(--spacing-sm)',
             cursor: 'pointer',
             color: 'white',
             fontWeight: 600,
@@ -101,7 +101,7 @@ export default function StudyHub() {
                 background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                 border: 'none',
                 borderRadius: '16px',
-                padding: 'calc(var(--spacing-md) + var(--spacing-min))',
+                padding: 'var(--spacing-md-lg)',
                 boxShadow: 'var(--shadow-extruded-flat)',
                 display: 'flex',
                 justifyContent: 'space-between',

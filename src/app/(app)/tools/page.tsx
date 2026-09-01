@@ -19,8 +19,8 @@ export default function ToolsMenu() {
   if (!user) return null;
 
   return (
-    <div style={{ padding: 'calc(var(--spacing-md) * 1.5)', display: 'flex', flexDirection: 'column', gap: 'calc(var(--spacing-md) * 1.5)', height: '100%' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'calc(var(--spacing-min) * 2)' }}>Ferramentas Médicas</h1>
+    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>Ferramentas Médicas</h1>
       <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Módulos práticos de cálculo determinístico (Zero-LLM).</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
@@ -31,13 +31,13 @@ export default function ToolsMenu() {
             background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
             border: 'none',
             borderRadius: '16px',
-            padding: 'calc(var(--spacing-md) * 1.5) var(--spacing-md)',
+            padding: 'var(--spacing-lg) var(--spacing-md)',
             boxShadow: 'var(--shadow-extruded-large)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 'calc(var(--spacing-min) * 3)',
+            gap: 'var(--spacing-ml)',
             cursor: 'pointer',
             transition: 'all 0.2s ease-in-out',
             color: 'var(--color-semantic-text-textdark)',
