@@ -107,3 +107,18 @@ a {
   }
 }
 
+
+/* Markdown defaults within message bubbles */
+p {
+  margin-bottom: var(--spacing-sm);
+}
+p:last-child {
+  margin-bottom: 0;
+}
+strong {
+  font-weight: 700;
+}
+ul, ol {
+  margin-left: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -362,7 +363,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                           color: 'var(--color-semantic-text-textdark)'
                         }}
                       >
-                        {interaction.response}
+                        <ReactMarkdown>{interaction.response}</ReactMarkdown>
                       </div>
                       
                       {interaction.citations && interaction.citations.length > 0 && (

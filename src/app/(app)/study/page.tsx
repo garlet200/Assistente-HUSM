@@ -67,23 +67,22 @@ export default function StudyHub() {
           style={{
             background: 'var(--color-semantic-accent-accentprimary)',
             border: 'none',
-            borderRadius: '16px',
-            padding: 'var(--spacing-ml) var(--spacing-lg)',
+            borderRadius: '50%',
+            width: '48px',
+            height: '48px',
             boxShadow: 'var(--shadow-extruded-medium)',
             display: 'flex',
             alignItems: 'center',
-            gap: 'var(--spacing-sm)',
+            justifyContent: 'center',
             cursor: 'pointer',
             color: 'white',
-            fontWeight: 600,
-            fontFamily: 'var(--typography-fontfamilies-mainsans)'
+            flexShrink: 0
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
           </svg>
-          Novo Estudo
         </button>
       </div>
 

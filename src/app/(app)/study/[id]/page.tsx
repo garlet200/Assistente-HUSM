@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 import { useAuth } from '@/lib/auth';
 import { MultipleChoiceQuestion } from '@/components/ui/MultipleChoiceQuestion';
 import { createClient } from '@/lib/supabase/client';
@@ -415,7 +416,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                           color: 'var(--color-semantic-text-textdark)'
                         }}
                       >
-                        {msg.content}
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
                       </div>
                     )}
                   </div>
