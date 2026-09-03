@@ -350,7 +350,12 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                   <hr style={{ border: 'none', borderTop: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)', margin: '12px 0' }} />
                   
                   {!interaction.response ? (
-                    <div style={{ fontFamily: 'var(--typography-fontfamilies-mainsans)', color: 'var(--color-semantic-text-textlight)', fontStyle: 'italic' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', fontFamily: 'var(--typography-fontfamilies-mainsans)', color: 'var(--color-semantic-text-textlight)', fontStyle: 'italic' }}>
+                      <style>{`@keyframes spin-anim { 100% { transform: rotate(360deg); } }`}</style>
+                      <svg style={{ animation: 'spin-anim 1s linear infinite', transformOrigin: 'center' }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25"></circle>
+                        <path d="M12 2v4"></path>
+                      </svg>
                       Processando resposta...
                     </div>
                   ) : (
@@ -363,18 +368,79 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                           color: 'var(--color-semantic-text-textdark)'
                         }}
                       >
-                        <ReactMarkdown>{interaction.response}</ReactMarkdown>
+                        <ReactMarkdown
+                          components={{
+                            a: ({ node, href, children, ...props }: any) => {
+                              if (href?.startsWith('#sugestao-')) {
+                                const suggestionText = decodeURIComponent(href.replace('#sugestao-', ''));
+                                return (
+                                  <button
+                                    onClick={() => setInput(suggestionText)}
+                                    style={{
+                                      background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+                                      border: '1px solid var(--color-semantic-accent-accentprimary)',
+                                      borderRadius: '16px',
+                                      padding: 'var(--spacing-sm) var(--spacing-md)',
+                                      color: 'var(--color-semantic-accent-accentprimary)',
+                                      cursor: 'pointer',
+                                      display: 'inline-block',
+                                      margin: 'var(--spacing-min)',
+                                      fontSize: '0.875rem'
+                                    }}
+                                  >
+                                    {children}
+                                  </button>
+                                );
+                              }
+                              return <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-semantic-accent-accentprimary)' }} {...props}>{children}</a>;
+                            }
+                          }}
+                        >
+                          {interaction.response}
+                        </ReactMarkdown>
                       </div>
                       
                       {interaction.citations && interaction.citations.length > 0 && (
                         <div style={{ marginTop: 'var(--spacing-md)', paddingTop: '12px' }}>
                           <p style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: 'var(--spacing-sm)', color: 'var(--color-semantic-text-textlight)' }}>Fontes (RAG):</p>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-sm)' }}>
-                            {interaction.citations.map((cit, idx) => (
-                              <span key={idx} style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)', fontSize: '0.75rem', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', padding: 'var(--spacing-min) var(--spacing-sm)', borderRadius: '4px', border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)' }}>
-                                {cit}
-                              </span>
-                            ))}
+                            {interaction.citations.map((cit, idx) => {
+                              const isPmid = cit.startsWith('PMID: ');
+                              if (!isPmid) {
+                                return (
+                                  <span key={idx} style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)', fontSize: '0.75rem', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', padding: 'var(--spacing-min) var(--spacing-sm)', borderRadius: '4px', border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)' }}>
+                                    {cit}
+                                  </span>
+                                );
+                              }
+                              
+                              const citParts = cit.split(' | ');
+                              const pmidCode = citParts[0].replace('PMID:', '').trim();
+                              const title = citParts[1] || pmidCode;
+                              const displayTitle = title.length > 20 ? title.substring(0, 20) + '...' : title;
+                              const url = `https://pubmed.ncbi.nlm.nih.gov/${pmidCode}/`;
+                              
+                              return (
+                                <a 
+                                  key={idx} 
+                                  href={url}
+                                  target="_blank"
+                                  title={title}
+                                  style={{ 
+                                    fontFamily: 'var(--typography-fontfamilies-mainmono)', 
+                                    fontSize: '0.75rem', 
+                                    backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', 
+                                    padding: 'var(--spacing-min) var(--spacing-sm)', 
+                                    borderRadius: '4px', 
+                                    border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                                    textDecoration: 'none',
+                                    color: 'var(--color-semantic-accent-accentprimary)',
+                                    cursor: 'pointer'
+                                  }}>
+                                  🔗 {displayTitle}
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
