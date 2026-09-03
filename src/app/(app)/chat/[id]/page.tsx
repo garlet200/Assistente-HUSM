@@ -11,6 +11,8 @@ import { createClient } from '@/lib/supabase/client';
 
 type Interaction = {
   id: string;
+  userMessageId?: string;
+  modelMessageId?: string;
   prompt: string;
   response: string | null;
   timestamp: Date;
@@ -30,6 +32,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
   const [fetchingHistory, setFetchingHistory] = useState(resolvedId !== 'new');
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [chatTitle, setChatTitle] = useState('Novo Caso Clínico');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -56,6 +59,23 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       endOfMessagesRef.current?.scrollIntoView({ behavior: 'auto' });
     }
   }, [fetchingHistory]);
+
+  const handleRetry = async (interaction: Interaction) => {
+    // Remove from UI immediately
+    setInteractions(prev => prev.filter(int => int.id !== interaction.id));
+    
+    // Delete from DB in background
+    if (interaction.userMessageId) {
+      supabase.from('messages').delete().eq('id', interaction.userMessageId).then();
+    }
+    if (interaction.modelMessageId) {
+      supabase.from('messages').delete().eq('id', interaction.modelMessageId).then();
+    }
+
+    // Resend automatically
+    handleSend(interaction.prompt);
+  };
+
 
   const handleScroll = () => {
     if (mainRef.current) {
@@ -100,6 +120,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
         if (currentInt) newInteractions.push(currentInt);
         currentInt = {
           id: msg.id,
+          userMessageId: msg.id,
           prompt: msg.content,
           response: null,
           timestamp: new Date(msg.created_at),
@@ -108,6 +129,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       } else if (msg.role === 'model' && currentInt) {
         currentInt.response = msg.content;
         currentInt.citations = msg.citations || [];
+        currentInt.modelMessageId = msg.id;
       }
     });
     if (currentInt) newInteractions.push(currentInt);
@@ -116,10 +138,10 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
     setFetchingHistory(false);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || loading || !user) return;
+  const handleSend = async (overridePrompt?: string | React.MouseEvent | any) => {
+    const currentPrompt = typeof overridePrompt === 'string' ? overridePrompt : input;
+    if (!currentPrompt.trim() || loading || !user) return;
 
-    const currentPrompt = input;
     const tempId = Date.now().toString();
     const newInteraction: Interaction = { 
       id: tempId, 
@@ -129,7 +151,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
     };
     
     setInteractions(prev => [...prev, newInteraction]);
-    setInput('');
+    if (typeof overridePrompt !== 'string') setInput('');
     setLoading(true);
     
     // Scroll to bottom when sending a new message
@@ -157,15 +179,19 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       }
       activeChatId = newChat.id;
       setChatId(activeChatId);
-      router.replace(`/chat/${activeChatId}`);
+      window.history.replaceState(null, '', `/chat/${activeChatId}`);
     }
 
     // 2. Save user message to DB
-    await supabase.from('messages').insert([{
+    const { data: dbUserMsg } = await supabase.from('messages').insert([{
       chat_id: activeChatId,
       role: 'user',
       content: currentPrompt
-    }]);
+    }]).select().single();
+
+    if (dbUserMsg) {
+      setInteractions(prev => prev.map(int => int.id === tempId ? { ...int, userMessageId: dbUserMsg.id } : int));
+    }
 
     // 3. Reconstruct history for the API
     const history = interactions.flatMap(int => [
@@ -192,26 +218,26 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       const data = await response.json();
       
       // 5. Save model response to DB
-      await supabase.from('messages').insert([{
+      const { data: dbModelMsg } = await supabase.from('messages').insert([{
         chat_id: activeChatId,
         role: 'model',
         content: data.text,
         citations: data.citations || []
-      }]);
+      }]).select().single();
 
       // Update 'updated_at' of the chat
       await supabase.from('chats').update({ updated_at: new Date().toISOString() }).eq('id', activeChatId);
 
       setInteractions(prev => prev.map(int => 
-        int.id === tempId 
-          ? { ...int, response: data.text, citations: data.citations }
+        (int.id === tempId || (dbUserMsg && int.userMessageId === dbUserMsg.id))
+          ? { ...int, response: data.text, citations: data.citations, modelMessageId: dbModelMsg?.id }
           : int
       ));
     } catch (error) {
       console.error(error);
       setInteractions(prev => prev.map(int => 
-        int.id === tempId 
-          ? { ...int, response: 'Ocorreu um erro ao processar sua solicitação. Tente novamente.' }
+        (int.id === tempId || (dbUserMsg && int.userMessageId === dbUserMsg.id))
+          ? { ...int, response: '⚠️ **Aviso do Sistema:** Ocorreu um erro ao processar sua solicitação. Tente novamente.' }
           : int
       ));
     } finally {
@@ -237,11 +263,37 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
     }, 50);
   };
 
+  const handleDeleteChat = async () => {
+    if (chatId !== 'new') {
+      await supabase.from('chats').delete().eq('id', chatId);
+    }
+    router.push('/chat');
+  };
+
   if (!user) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-ml)', padding: '16px 24px 0 24px', backgroundColor: 'transparent' }}>
+        <button 
+          onClick={() => setShowDeleteModal(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-semantic-status-error)',
+            padding: 'var(--spacing-min)'
+          }}
+          title="Excluir Caso"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
         <button 
           onClick={enableEditMode}
           style={{
@@ -399,6 +451,33 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
                           {interaction.response}
                         </ReactMarkdown>
                       </div>
+
+                      {interaction.response.includes('Aviso do Sistema:') && (
+                        <div style={{ marginTop: 'var(--spacing-md)' }}>
+                          <button
+                            onClick={() => handleRetry(interaction)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--spacing-sm)',
+                              background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+                              border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                              borderRadius: '16px',
+                              padding: 'var(--spacing-sm) var(--spacing-md)',
+                              color: 'var(--color-semantic-text-textdark)',
+                              cursor: 'pointer',
+                              fontWeight: 600,
+                              fontFamily: 'var(--typography-fontfamilies-mainsans)'
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                              <path d="M3 3v5h5"></path>
+                            </svg>
+                            Tentar novamente
+                          </button>
+                        </div>
+                      )}
                       
                       {interaction.citations && interaction.citations.length > 0 && (
                         <div style={{ marginTop: 'var(--spacing-md)', paddingTop: '12px' }}>
@@ -521,6 +600,63 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
           </button>
         </div>
       </footer>
+
+      {showDeleteModal && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+            padding: 'var(--spacing-xl)',
+            borderRadius: '24px',
+            boxShadow: 'var(--shadow-extruded-large)',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 var(--spacing-md) 0', color: 'var(--color-semantic-text-textdark)' }}>Excluir Caso?</h3>
+            <p style={{ margin: '0 0 var(--spacing-xl) 0', color: 'var(--color-semantic-text-textlight)' }}>
+              Tem certeza que deseja excluir este caso? Todas as mensagens serão perdidas para sempre.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  background: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-semantic-text-textdark)'
+                }}
+              >
+                Não excluir
+              </button>
+              <button 
+                onClick={handleDeleteChat}
+                style={{
+                  background: 'var(--color-semantic-status-error)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-primitive-white)'
+                }}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

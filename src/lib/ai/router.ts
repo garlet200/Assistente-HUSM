@@ -1,5 +1,5 @@
 import { AIRequest, AIResponse, PrivacyLevel } from './types';
-import { getBestModelForRole } from './registry';
+import { getBestModelForRole, getFallbackModelForRole } from './registry';
 import { deIdentify, requiresHighPrivacy } from './privacyGate';
 import { GeminiProvider } from './providers/gemini';
 import { searchPubMed } from './pubmed';
@@ -105,6 +105,40 @@ FORMATO - CRITÉRIOS DE SUCESSO
       }
       return response;
     } catch (error: any) {
+      if (error?.message && (error.message.includes('429') || error.message.includes('503') || error.message.includes('Quota') || error.message.includes('demand'))) {
+        const fallbackModel = getFallbackModelForRole(request.role, bestModel.id, requiredPrivacyLevel);
+        if (fallbackModel) {
+          console.warn(`Fallback: Alternando de ${bestModel.id} para ${fallbackModel.id} devido a falha da API.`);
+          try {
+            const fallbackProvider = this.providers.get(fallbackModel.provider);
+            if (fallbackProvider) {
+              const fbResponse = await fallbackProvider.generate(safeRequest, fallbackModel.id);
+              
+              const warningText = `\n\n> ⚠️ **Modo de Resiliência Ativo:** Devido à alta demanda ou limite da cota gratuita na API principal, esta resposta foi gerada utilizando o modelo de *backup* (${fallbackModel.id}), que pode apresentar menos processamento cognitivo ou menor capacidade de raciocínio crítico em casos altamente complexos.`;
+              
+              if (request.responseFormat === 'json') {
+                try {
+                  const parsed = JSON.parse(fbResponse.text);
+                  parsed.content = parsed.content + warningText;
+                  fbResponse.text = JSON.stringify(parsed);
+                } catch (e) {
+                  // Fallback to unparsed
+                }
+              } else {
+                fbResponse.text = fbResponse.text + warningText;
+              }
+
+              if (pmidCitations.length > 0) {
+                fbResponse.citations = [...(fbResponse.citations || []), ...pmidCitations];
+              }
+              return fbResponse;
+            }
+          } catch (fbError) {
+             console.error("Fallback também falhou:", fbError);
+          }
+        }
+      }
+
       console.error(`Provider ${provider.name} falhou:`, error);
       let errorDetail = 'Erro desconhecido da API';
       if (error?.message) {

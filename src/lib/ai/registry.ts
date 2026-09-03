@@ -13,7 +13,7 @@ export const ModelRegistry: ModelDefinition[] = [
     provider: 'gemini',
     privacyLevel: 'medium',
     cost: 0,
-    supportedRoles: ['MODEL_ROLE_RAG_SYNTHESIS']
+    supportedRoles: ['MODEL_ROLE_CLINICAL_REASONING', 'MODEL_ROLE_RAG_SYNTHESIS', 'MODEL_ROLE_EDUCATIONAL']
   },
   {
     id: 'llama3-8b-local',
@@ -44,4 +44,21 @@ export function getBestModelForRole(role: string, requiredPrivacy: string = 'med
   privacyFiltered.sort((a, b) => a.cost - b.cost);
 
   return privacyFiltered[0];
+}
+
+export function getFallbackModelForRole(role: string, primaryModelId: string, requiredPrivacy: string = 'medium'): ModelDefinition | null {
+  const suitableModels = ModelRegistry.filter(m => 
+    m.supportedRoles.includes(role as any) && m.id !== primaryModelId
+  );
+
+  const privacyFiltered = suitableModels.filter(m => {
+    if (requiredPrivacy === 'high') return m.privacyLevel === 'high';
+    return true;
+  });
+
+  if (privacyFiltered.length === 0) return null;
+
+  // We prefer gemini-3.5-flash-lite as a fallback if available, else just take the first one
+  const fallback = privacyFiltered.find(m => m.id.includes('lite'));
+  return fallback || privacyFiltered[0];
 }

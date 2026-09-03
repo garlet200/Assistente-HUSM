@@ -29,6 +29,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
   const [loading, setLoading] = useState(false);
   const [chatTitle, setChatTitle] = useState('Sessão de Estudo');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -89,11 +90,49 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     }
   };
 
+  const handleRetry = async (errorIndex: number) => {
+    const errorMsg = messages[errorIndex];
+    const userMsg = messages[errorIndex - 1];
+    
+    // UI removal
+    const newMessages = [...messages];
+    newMessages.splice(errorIndex - 1, 2);
+    setMessages(newMessages);
+    
+    // DB removal
+    if (errorMsg.id !== 'err' && !errorMsg.id.includes('err')) {
+      supabase.from('messages').delete().eq('id', errorMsg.id).then();
+    }
+    if (userMsg && userMsg.id !== 'err' && !userMsg.id.includes('err')) {
+      supabase.from('messages').delete().eq('id', userMsg.id).then();
+    }
+    
+    // Retry logic
+    if (userMsg.content.startsWith('Quero estudar sobre: ')) {
+      const topic = userMsg.content.replace('Quero estudar sobre: ', '');
+      handleStartStudy(topic);
+    } else {
+      const previousMCQ = messages[errorIndex - 2];
+      if (previousMCQ) {
+        await updateMessageMetadata(previousMCQ.id, { ...previousMCQ, answered: false });
+        setMessages(prev => prev.map(m => m.id === previousMCQ.id ? { ...m, answered: false } : m));
+        handleAnswerSelect(previousMCQ.id, userMsg.content);
+      }
+    }
+  };
+
   const enableEditMode = () => {
     setIsEditingTitle(true);
     setTimeout(() => {
       titleInputRef.current?.focus();
     }, 50);
+  };
+
+  const handleDeleteChat = async () => {
+    if (resolvedId !== 'new') {
+      await supabase.from('chats').delete().eq('id', resolvedId);
+    }
+    router.push('/study');
   };
 
   const saveMessageToDB = async (role: string, content: string, metadata: Record<string, unknown> = {}) => {
@@ -173,7 +212,7 @@ AÇÃO: Você atua como simulador. Você deve gerar um caso clínico desafiador,
       }
     } catch (e) {
       console.error(e);
-      setMessages(prev => [...prev, { id: 'err', role: 'model', content: 'Ocorreu um erro ao gerar o caso. Tente novamente.' }]);
+      setMessages(prev => [...prev, { id: 'err', role: 'model', content: '⚠️ **Aviso do Sistema:** Ocorreu um erro de rede. Tente novamente.' }]);
     } finally {
       setLoading(false);
     }
@@ -245,7 +284,7 @@ AÇÃO: Avalie a resposta do usuário e faça a próxima pergunta do caso. A sua
       }
     } catch (e) {
       console.error(e);
-      setMessages(prev => [...prev, { id: 'err', role: 'model', content: 'Erro ao avaliar a resposta. Tente novamente.' }]);
+      setMessages(prev => [...prev, { id: 'err', role: 'model', content: '⚠️ **Aviso do Sistema:** Erro ao avaliar a resposta. Tente novamente.' }]);
     } finally {
       setLoading(false);
     }
@@ -257,6 +296,25 @@ AÇÃO: Avalie a resposta do usuário e faça a próxima pergunta do caso. A sua
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)', backgroundColor: 'transparent' }}>
+        <button 
+          onClick={() => setShowDeleteModal(true)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-semantic-status-error)',
+            padding: 'var(--spacing-min)'
+          }}
+          title="Excluir Caso"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
         <button 
           onClick={enableEditMode}
           style={{
@@ -424,16 +482,45 @@ AÇÃO: Avalie a resposta do usuário e faça a próxima pergunta do caso. A sua
                         disabled={msg.answered || loading}
                       />
                     ) : (
-                      <div 
-                        style={{ 
-                          fontFamily: msg.role === 'model' ? 'var(--typography-fontfamilies-mainserif)' : 'var(--typography-fontfamilies-mainsans)',
-                          lineHeight: '1.6',
-                          whiteSpace: 'pre-wrap',
-                          color: 'var(--color-semantic-text-textdark)'
-                        }}
-                      >
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
+                      <>
+                        <div 
+                          style={{ 
+                            fontFamily: msg.role === 'model' ? 'var(--typography-fontfamilies-mainserif)' : 'var(--typography-fontfamilies-mainsans)',
+                            lineHeight: '1.6',
+                            whiteSpace: 'pre-wrap',
+                            color: 'var(--color-semantic-text-textdark)'
+                          }}
+                        >
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+
+                        {msg.content.includes('Aviso do Sistema:') && (
+                          <div style={{ marginTop: 'var(--spacing-md)' }}>
+                            <button
+                              onClick={() => handleRetry(messages.indexOf(msg))}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)',
+                                background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+                                border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                                borderRadius: '16px',
+                                padding: 'var(--spacing-sm) var(--spacing-md)',
+                                color: 'var(--color-semantic-text-textdark)',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontFamily: 'var(--typography-fontfamilies-mainsans)'
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                              </svg>
+                              Tentar novamente
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -455,6 +542,63 @@ AÇÃO: Avalie a resposta do usuário e faça a próxima pergunta do caso. A sua
           <div ref={endOfMessagesRef} />
         </main>
       </div>
+      
+      {showDeleteModal && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+            padding: 'var(--spacing-xl)',
+            borderRadius: '24px',
+            boxShadow: 'var(--shadow-extruded-large)',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 var(--spacing-md) 0', color: 'var(--color-semantic-text-textdark)' }}>Excluir Sessão?</h3>
+            <p style={{ margin: '0 0 var(--spacing-xl) 0', color: 'var(--color-semantic-text-textlight)' }}>
+              Tem certeza que deseja excluir esta sessão? Todo o progresso será perdido para sempre.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  background: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-semantic-text-textdark)'
+                }}
+              >
+                Não excluir
+              </button>
+              <button 
+                onClick={handleDeleteChat}
+                style={{
+                  background: 'var(--color-semantic-status-error)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-primitive-white)'
+                }}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
