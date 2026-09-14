@@ -1,21 +1,32 @@
 'use client';
 
-import React, { useState, useRef, useEffect, use } from 'react';
+import { useState, useRef, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { Trash2, Edit, Send, RotateCcw } from 'lucide-react';
+<<<<<<< Updated upstream
+=======
+import { Edit, Send, RotateCcw, Loader2 } from 'lucide-react';
+>>>>>>> Stashed changes
 import { useAuth } from '@/lib/auth';
-import { MultipleChoiceQuestion } from '@/components/study/MultipleChoiceQuestion';
+import { MultipleChoiceQuestion } from '@/components/ui/MultipleChoiceQuestion';
 import { createClient } from '@/lib/supabase/client';
-import { DeleteConfirmationModal } from '@/components/common/DeleteConfirmationModal';
+<<<<<<< Updated upstream
+=======
+import { ReliabilityBadge } from '@/components/chat/ReliabilityBadge';
+>>>>>>> Stashed changes
 
-interface StudyMessage {
+type StudyMessage = {
   id: string;
   role: 'user' | 'model';
   content: string;
   isMCQ?: boolean;
   options?: string[];
   answered?: boolean;
+<<<<<<< Updated upstream
+};
+=======
+  reliability?: 'high' | 'standard' | 'reduced';
+  modelTier?: 'primary' | 'fallback_1' | 'fallback_2';
 }
 
 interface GatewayEducationalJsonPayload {
@@ -77,29 +88,95 @@ function buildStudyConversationHistory(messagesList: StudyMessage[]): Array<{ ro
     };
   });
 }
+>>>>>>> Stashed changes
+
+/**
+ * Checks whether the simulation message represents an error or temporary unavailability.
+ */
+function isRetryableResponse(text: string | null | undefined): boolean {
+  if (!text) return false;
+  return (
+    text.includes('Aviso do Sistema:') ||
+    text.includes('indisponível') ||
+    text.includes('tente novamente') ||
+    text.includes('aguarde alguns instantes') ||
+    text.includes('alta demanda') ||
+    text.includes('erro ao processar') ||
+    text.includes('Erro de rede') ||
+    text.includes('erro')
+  );
+}
 
 export default function StudyChat({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
+<<<<<<< Updated upstream
+  const resolvedParams = use(params);
+  const resolvedId = resolvedParams.id;
+  
+  const [topicSelected, setTopicSelected] = useState(false);
+  const [customTopic, setCustomTopic] = useState('');
+=======
   const { id: routeSessionId } = use(params);
 
   const [hasSelectedTopic, setHasSelectedTopic] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState('');
   const [customTopicInput, setCustomTopicInput] = useState('');
+>>>>>>> Stashed changes
   const [messages, setMessages] = useState<StudyMessage[]>([]);
-  const [isLoadingAiResponse, setIsLoadingAiResponse] = useState(false);
-  const [sessionTitle, setSessionTitle] = useState('Sessão de Estudo');
+  const [loading, setLoading] = useState(false);
+  const [chatTitle, setChatTitle] = useState('Sessão de Estudo');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+<<<<<<< Updated upstream
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+=======
+>>>>>>> Stashed changes
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
-  const mainScrollContainerRef = useRef<HTMLElement>(null);
-  const titleInputElementRef = useRef<HTMLInputElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
-  // Authentication guard and study session loading
+  const loadHistory = async (dbChatId: string) => {
+    const { data: chatData } = await supabase
+      .from('chats')
+      .select('title')
+      .eq('id', dbChatId)
+      .single();
+      
+    if (chatData) {
+      setChatTitle(chatData.title);
+    }
+
+    const { data: dbMessages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('chat_id', dbChatId)
+      .order('created_at', { ascending: true });
+
+    if (!error && dbMessages && dbMessages.length > 0) {
+      setTopicSelected(true);
+      const formatted: StudyMessage[] = dbMessages.map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'model',
+        content: m.content,
+        isMCQ: m.metadata?.isMCQ,
+        options: m.metadata?.options,
+        answered: m.metadata?.answered
+      }));
+      setMessages(formatted);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       router.push('/');
+<<<<<<< Updated upstream
+    } else {
+      if (resolvedId !== 'new') {
+        sessionStorage.setItem('activeStudyId', resolvedId);
+        loadHistory(resolvedId);
+=======
       return;
     }
 
@@ -118,8 +195,18 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
 
       if (chatRecord?.title) {
         setSessionTitle(chatRecord.title);
+        const extractedTopic = chatRecord.title.replace(/^Estudo:\s*/, '');
+        if (extractedTopic) {
+          setSelectedTopic(extractedTopic);
+        }
+>>>>>>> Stashed changes
       }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, router, resolvedId]);
 
+<<<<<<< Updated upstream
+=======
       const { data: databaseMessages, error: queryError } = await supabase
         .from('messages')
         .select('*')
@@ -129,6 +216,13 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
       if (!queryError && databaseMessages && databaseMessages.length > 0) {
         setHasSelectedTopic(true);
 
+        const firstUserTopicMessage = databaseMessages.find(
+          (item) => item.role === 'user' && item.content.startsWith('Quero estudar sobre: ')
+        );
+        if (firstUserTopicMessage) {
+          setSelectedTopic(firstUserTopicMessage.content.replace('Quero estudar sobre: ', ''));
+        }
+
         const formattedStudyMessages: StudyMessage[] = databaseMessages.map((item) => ({
           id: item.id,
           role: item.role as 'user' | 'model',
@@ -136,6 +230,8 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
           isMCQ: item.metadata?.isMCQ,
           options: item.metadata?.options,
           answered: item.metadata?.answered,
+          reliability: item.metadata?.reliability,
+          modelTier: item.metadata?.modelTier,
         }));
 
         setMessages(formattedStudyMessages);
@@ -146,118 +242,183 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
   }, [user, router, routeSessionId, supabase]);
 
   // Keep scroll focused at the bottom as simulation messages appear
+>>>>>>> Stashed changes
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoadingAiResponse]);
+  }, [messages, loading]);
 
-  const handleTitleBlurOrSubmit = async (newTitleText: string) => {
-    const trimmedTitle = newTitleText.trim() || 'Sessão de Estudo';
-    setSessionTitle(trimmedTitle);
+  const handleTitleChange = async (newTitle: string) => {
+    setChatTitle(newTitle);
     setIsEditingTitle(false);
-
-    if (routeSessionId !== 'new') {
-      await supabase.from('chats').update({ title: trimmedTitle }).eq('id', routeSessionId);
+    if (resolvedId !== 'new') {
+      await supabase.from('chats').update({ title: newTitle }).eq('id', resolvedId);
     }
   };
 
-  const enableTitleEditingMode = () => {
+  const handleRetry = async (errorIndex: number) => {
+    const errorMsg = messages[errorIndex];
+    const userMsg = messages[errorIndex - 1];
+    
+    // UI removal
+    const newMessages = [...messages];
+    newMessages.splice(errorIndex - 1, 2);
+    setMessages(newMessages);
+    
+    // DB removal
+    if (errorMsg.id !== 'err' && !errorMsg.id.includes('err')) {
+      supabase.from('messages').delete().eq('id', errorMsg.id).then();
+    }
+    if (userMsg && userMsg.id !== 'err' && !userMsg.id.includes('err')) {
+      supabase.from('messages').delete().eq('id', userMsg.id).then();
+    }
+    
+    // Retry logic
+    if (userMsg.content.startsWith('Quero estudar sobre: ')) {
+      const topic = userMsg.content.replace('Quero estudar sobre: ', '');
+      handleStartStudy(topic);
+    } else {
+      const previousMCQ = messages[errorIndex - 2];
+      if (previousMCQ) {
+        await updateMessageMetadata(previousMCQ.id, { ...previousMCQ, answered: false });
+        setMessages(prev => prev.map(m => m.id === previousMCQ.id ? { ...m, answered: false } : m));
+        handleAnswerSelect(previousMCQ.id, userMsg.content);
+      }
+    }
+  };
+
+  const enableEditMode = () => {
     setIsEditingTitle(true);
     setTimeout(() => {
-      titleInputElementRef.current?.focus();
+      titleInputRef.current?.focus();
     }, 50);
   };
 
-  const handleDeleteStudySession = async () => {
-    if (routeSessionId !== 'new') {
-      await supabase.from('chats').delete().eq('id', routeSessionId);
+<<<<<<< Updated upstream
+  const handleDeleteChat = async () => {
+    if (resolvedId !== 'new') {
+      await supabase.from('chats').delete().eq('id', resolvedId);
     }
     router.push('/study');
   };
+=======
+>>>>>>> Stashed changes
 
-  const persistMessageToDatabase = async (
-    role: 'user' | 'model',
-    content: string,
-    metadata: Record<string, unknown> = {}
-  ) => {
-    if (routeSessionId === 'new') return null;
-
-    const { data: persistedMessage } = await supabase
+  const saveMessageToDB = async (role: string, content: string, metadata: Record<string, unknown> = {}) => {
+    if (resolvedId === 'new') return null;
+    const { data } = await supabase
       .from('messages')
       .insert({
-        chat_id: routeSessionId,
+        chat_id: resolvedId,
         role,
         content,
-        metadata,
+        metadata
       })
       .select()
       .single();
-
-    return persistedMessage;
+    return data;
   };
 
-  const updateMessageMetadataInDatabase = async (
-    messageId: string,
-    metadata: Record<string, unknown>
-  ) => {
-    if (routeSessionId === 'new') return;
+  const updateMessageMetadata = async (messageId: string, metadata: Record<string, unknown>) => {
+    if (resolvedId === 'new') return;
     await supabase.from('messages').update({ metadata }).eq('id', messageId);
   };
 
+<<<<<<< Updated upstream
+  const handleStartStudy = async (topic: string) => {
+    setTopicSelected(true);
+    if (resolvedId !== 'new' && chatTitle === 'Nova Sessão de Estudo') {
+      handleTitleChange(`Estudo: ${topic}`);
+    }
+
+    const initMsg: StudyMessage = {
+      id: Date.now().toString(),
+      role: 'model',
+      content: `Iniciando sessão de estudos sobre: **${topic}**. Aguarde, estou elaborando o caso clínico...`,
+    };
+    setMessages([initMsg]);
+    setLoading(true);
+    
+    await saveMessageToDB('user', `Quero estudar sobre: ${topic}`);
+=======
   /**
    * Starts a clinical study case based on a selected medical specialty topic.
    */
-  const handleStartStudy = async (selectedTopic: string) => {
+  const handleStartStudy = async (topicToStudy: string) => {
+    setSelectedTopic(topicToStudy);
     setHasSelectedTopic(true);
 
     if (routeSessionId !== 'new' && sessionTitle === 'Nova Sessão de Estudo') {
-      handleTitleBlurOrSubmit(`Estudo: ${selectedTopic}`);
+      handleTitleBlurOrSubmit(`Estudo: ${topicToStudy}`);
     }
 
-    const initialPlaceholderMessage: StudyMessage = {
-      id: crypto.randomUUID(),
-      role: 'model',
-      content: `Iniciando sessão de estudos sobre: **${selectedTopic}**. Aguarde, estou elaborando o caso clínico...`,
-    };
-
-    setMessages([initialPlaceholderMessage]);
+    setMessages([]);
     setIsLoadingAiResponse(true);
 
-    await persistMessageToDatabase('user', `Quero estudar sobre: ${selectedTopic}`);
+    await persistMessageToDatabase('user', `Quero estudar sobre: ${topicToStudy}`);
+>>>>>>> Stashed changes
 
     try {
-      const gatewayHttpResponse = await fetch('/api/gateway', {
+      const response = await fetch('/api/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `Gere um caso clínico sobre ${selectedTopic} seguido de uma pergunta de múltipla escolha.`,
+<<<<<<< Updated upstream
+          prompt: `Gere um caso clínico sobre ${topic} seguido de uma pergunta de múltipla escolha.`,
+=======
+          prompt: `Gere um caso clínico sobre ${topicToStudy} seguido de uma pergunta de múltipla escolha.`,
+>>>>>>> Stashed changes
           role: 'MODEL_ROLE_EDUCATIONAL',
           responseFormat: 'json',
-          systemInstruction: buildInitialCaseSystemInstruction(),
+          systemInstruction: `Você é o "Assistente_HUSM", uma interface de raciocínio clínico. Opere com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é". Use termos como "Esta interface processa" ou "O modelo indica". Não use emojis.
+
+TAREFA - SIMULAÇÃO CLÍNICA
+Gerar e conduzir casos clínicos interativos complexos (anamnese, exame físico, hipóteses e manejo) para fins educacionais.
+Use terminologia médica precisa, vocabulário vasto e estruturas frasais variadas. Incorpore detalhes fisiopatológicos, epidemiológicos e farmacológicos sempre que relevante.
+PROIBIÇÃO DE DIAGNÓSTICO: Estritamente proibido fornecer diagnóstico definitivo real.
+AVISO OBRIGATÓRIO: Sempre finalize a chave "content" do JSON com o seguinte aviso: "AVISO: Esta é uma ferramenta educacional e não substitui o julgamento ou o cuidado de um profissional de saúde licenciado."
+
+AÇÃO: Você atua como simulador. Você deve gerar um caso clínico desafiador, com história da moléstia atual, exame físico e exames laboratoriais se relevante, terminando com UMA pergunta de múltipla escolha com 4 ou 5 opções (A, B, C, D). A sua saída DEVE ser estritamente em JSON válido seguindo a estrutura: {"content": "O texto do caso clínico e a pergunta em si. AVISO:...", "isMCQ": true, "options": ["A) opção", "B) opção", "C) opção", "D) opção"]}`
         }),
       });
 
-      if (!gatewayHttpResponse.ok) {
-        throw new Error('Falha na resposta do gateway de estudo');
-      }
-
-      const gatewayResult = await gatewayHttpResponse.json();
-      const parsedAiPayload: GatewayEducationalJsonPayload = JSON.parse(gatewayResult.text);
-
-      const generatedStudyMessage: StudyMessage = {
-        id: crypto.randomUUID(),
+      if (!response.ok) throw new Error('Erro na API');
+      
+      const result = await response.json();
+      const parsed = JSON.parse(result.text); // Since responseFormat=json, the text is a JSON string
+      
+      const aiMsg: StudyMessage = {
+        id: Date.now().toString(),
         role: 'model',
+<<<<<<< Updated upstream
+        content: parsed.content,
+        isMCQ: parsed.isMCQ,
+        options: parsed.options,
+        answered: false
+      };
+      
+      setMessages(prev => [...prev, aiMsg]);
+      const savedMsg = await saveMessageToDB('model', parsed.content, { isMCQ: parsed.isMCQ, options: parsed.options, answered: false });
+      if (savedMsg) {
+        setMessages(prev => prev.map(m => m.id === aiMsg.id ? { ...m, id: savedMsg.id } : m));
+=======
         content: parsedAiPayload.content,
         isMCQ: parsedAiPayload.isMCQ,
         options: parsedAiPayload.options,
         answered: false,
+        reliability: gatewayResult.reliability,
+        modelTier: gatewayResult.modelTier,
       };
 
-      setMessages((previousMessages) => [...previousMessages, generatedStudyMessage]);
+      setMessages([generatedStudyMessage]);
 
       const persistedRecord = await persistMessageToDatabase('model', parsedAiPayload.content, {
         isMCQ: parsedAiPayload.isMCQ,
         options: parsedAiPayload.options,
         answered: false,
+        reliability: gatewayResult.reliability,
+        modelTier: gatewayResult.modelTier,
+        modelId: gatewayResult.modelId,
+        displayName: gatewayResult.displayName,
       });
 
       if (persistedRecord) {
@@ -266,83 +427,87 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
             item.id === generatedStudyMessage.id ? { ...item, id: persistedRecord.id } : item
           )
         );
+>>>>>>> Stashed changes
       }
-    } catch (studySimulationError) {
-      console.error('Erro na simulação clínica:', studySimulationError);
-
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        {
-          id: 'err',
-          role: 'model',
-          content: '⚠️ **Aviso do Sistema:** Ocorreu um erro de rede. Tente novamente.',
-        },
-      ]);
+    } catch (e) {
+      console.error(e);
+      setMessages(prev => [...prev, { id: 'err', role: 'model', content: '⚠️ **Aviso do Sistema:** Ocorreu um erro de rede. Tente novamente.' }]);
     } finally {
-      setIsLoadingAiResponse(false);
+      setLoading(false);
     }
   };
 
-  /**
-   * Evaluates the student's answer to the MCQ and progresses to the next clinical step.
-   */
-  const handleAnswerSelect = async (questionMessageId: string, chosenOptionText: string) => {
-    // 1. Mark question as answered in state and DB
-    setMessages((previousMessages) =>
-      previousMessages.map((item) =>
-        item.id === questionMessageId ? { ...item, answered: true } : item
-      )
-    );
-
-    const targetQuestionMessage = messages.find((item) => item.id === questionMessageId);
-    if (targetQuestionMessage) {
-      await updateMessageMetadataInDatabase(questionMessageId, {
-        ...targetQuestionMessage,
-        answered: true,
-      });
+  const handleAnswerSelect = async (messageId: string, option: string) => {
+    // 1. Mark current question as answered
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, answered: true } : m));
+    
+    // Find the original message to update its metadata in DB
+    const originalMsg = messages.find(m => m.id === messageId);
+    if (originalMsg) {
+      await updateMessageMetadata(messageId, { ...originalMsg, answered: true });
     }
 
-    // 2. Append user's selection
-    const userSelectionMessage: StudyMessage = {
-      id: crypto.randomUUID(),
+    // 2. Add user answer
+    const userMsg: StudyMessage = {
+      id: Date.now().toString(),
       role: 'user',
-      content: chosenOptionText,
+      content: option
     };
+    setMessages(prev => [...prev, userMsg]);
+    await saveMessageToDB('user', option);
 
-    setMessages((previousMessages) => [...previousMessages, userSelectionMessage]);
-    await persistMessageToDatabase('user', chosenOptionText);
-
-    setIsLoadingAiResponse(true);
+    setLoading(true);
 
     try {
-      const conversationHistory = buildStudyConversationHistory(messages);
-
-      const gatewayHttpResponse = await fetch('/api/gateway', {
+      // Build history to send to LLM
+      const history = messages.map(m => ({ role: m.role, content: m.isMCQ ? `${m.content}\nOpções: ${m.options?.join(' | ')}` : m.content }));
+      
+      const response = await fetch('/api/gateway', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `O aluno respondeu: ${chosenOptionText}. Avalie a resposta. Diga se está correta ou incorreta, explique detalhadamente o porquê referenciando as diretrizes e, em seguida, crie uma NOVA pergunta sobre a evolução do caso. Responda em JSON.`,
+          prompt: `O aluno respondeu: ${option}. Avalie a resposta. Diga se está correta ou incorreta, explique detalhadamente o porquê referenciando as diretrizes e, em seguida, crie uma NOVA pergunta sobre a evolução do caso. Responda em JSON.`,
           role: 'MODEL_ROLE_EDUCATIONAL',
-          history: conversationHistory,
+          history,
           responseFormat: 'json',
-          systemInstruction: buildAnswerEvaluationSystemInstruction(),
+          systemInstruction: `Você é o "Assistente_HUSM", uma interface de raciocínio clínico. Opere com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é". Use termos como "Esta interface processa" ou "O modelo indica". Não use emojis.
+
+TAREFA - SIMULAÇÃO CLÍNICA
+Gerar e conduzir casos clínicos interativos complexos (anamnese, exame físico, hipóteses e manejo) para fins educacionais.
+Use terminologia médica precisa, vocabulário vasto e estruturas frasais variadas. Incorpore detalhes fisiopatológicos, epidemiológicos e farmacológicos sempre que relevante.
+PROIBIÇÃO DE DIAGNÓSTICO: Estritamente proibido fornecer diagnóstico definitivo real.
+AVISO OBRIGATÓRIO: Sempre finalize a chave "content" do JSON com o seguinte aviso: "AVISO: Esta é uma ferramenta educacional e não substitui o julgamento ou o cuidado de um profissional de saúde licenciado."
+
+AÇÃO: Avalie a resposta do usuário e faça a próxima pergunta do caso. A sua saída DEVE ser estritamente em JSON válido seguindo a estrutura: {"content": "Sua avaliação da resposta (correta ou incorreta) com as explicações fisiopatológicas, seguido da evolução do paciente e a nova pergunta. AVISO:...", "isMCQ": true, "options": ["A) opção", "B) opção", "C) opção", "D) opção"]}`
         }),
       });
 
-      if (!gatewayHttpResponse.ok) {
-        throw new Error('Falha na avaliação da resposta');
-      }
-
-      const gatewayResult = await gatewayHttpResponse.json();
-      const parsedAiPayload: GatewayEducationalJsonPayload = JSON.parse(gatewayResult.text);
-
-      const nextCaseQuestionMessage: StudyMessage = {
-        id: crypto.randomUUID(),
+      if (!response.ok) throw new Error('Erro na API');
+      
+      const result = await response.json();
+      const parsed = JSON.parse(result.text);
+      
+      const aiMsg: StudyMessage = {
+        id: (Date.now() + 1).toString(),
         role: 'model',
+<<<<<<< Updated upstream
+        content: parsed.content,
+        isMCQ: parsed.isMCQ,
+        options: parsed.options,
+        answered: false
+      };
+      
+      setMessages(prev => [...prev, aiMsg]);
+      const savedMsg = await saveMessageToDB('model', parsed.content, { isMCQ: parsed.isMCQ, options: parsed.options, answered: false });
+      if (savedMsg) {
+        setMessages(prev => prev.map(m => m.id === aiMsg.id ? { ...m, id: savedMsg.id } : m));
+=======
         content: parsedAiPayload.content,
         isMCQ: parsedAiPayload.isMCQ,
         options: parsedAiPayload.options,
         answered: false,
+        reliability: gatewayResult.reliability,
+        modelTier: gatewayResult.modelTier,
       };
 
       setMessages((previousMessages) => [...previousMessages, nextCaseQuestionMessage]);
@@ -351,6 +516,10 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
         isMCQ: parsedAiPayload.isMCQ,
         options: parsedAiPayload.options,
         answered: false,
+        reliability: gatewayResult.reliability,
+        modelTier: gatewayResult.modelTier,
+        modelId: gatewayResult.modelId,
+        displayName: gatewayResult.displayName,
       });
 
       if (persistedRecord) {
@@ -359,27 +528,31 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
             item.id === nextCaseQuestionMessage.id ? { ...item, id: persistedRecord.id } : item
           )
         );
+>>>>>>> Stashed changes
       }
-    } catch (evaluationError) {
-      console.error('Erro ao avaliar resposta:', evaluationError);
-
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        {
-          id: 'err',
-          role: 'model',
-          content: '⚠️ **Aviso do Sistema:** Erro ao avaliar a resposta. Tente novamente.',
-        },
-      ]);
+    } catch (e) {
+      console.error(e);
+      setMessages(prev => [...prev, { id: 'err', role: 'model', content: '⚠️ **Aviso do Sistema:** Erro ao avaliar a resposta. Tente novamente.' }]);
     } finally {
-      setIsLoadingAiResponse(false);
+      setLoading(false);
     }
   };
 
+<<<<<<< Updated upstream
+  if (!user) return null;
+=======
   /**
    * Retries an interaction if a system network error occurred.
    */
-  const handleRetryInteraction = async (errorItemIndex: number) => {
+  const handleRetryInteraction = async (targetMessageId: string) => {
+    const errorItemIndex = messages.findIndex((m) => m.id === targetMessageId);
+    if (errorItemIndex === -1) {
+      if (selectedTopic) {
+        handleStartStudy(selectedTopic);
+      }
+      return;
+    }
+
     const errorNoticeMessage = messages[errorItemIndex];
     const precedingUserMessage = messages[errorItemIndex - 1];
 
@@ -396,6 +569,9 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     }
 
     if (!precedingUserMessage) {
+      if (selectedTopic) {
+        handleStartStudy(selectedTopic);
+      }
       return;
     }
 
@@ -425,14 +601,15 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
   if (!user) {
     return null;
   }
+>>>>>>> Stashed changes
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
-      {/* Session Title Header */}
+      
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)', padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)', backgroundColor: 'transparent' }}>
-        <button
-          type="button"
-          onClick={() => setIsDeleteModalOpen(true)}
+<<<<<<< Updated upstream
+        <button 
+          onClick={() => setShowDeleteModal(true)}
           style={{
             background: 'transparent',
             border: 'none',
@@ -441,79 +618,113 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
             alignItems: 'center',
             justifyContent: 'center',
             color: 'var(--color-semantic-status-error)',
-            padding: 'var(--spacing-min)',
+            padding: 'var(--spacing-min)'
           }}
-          title="Excluir Sessão"
+          title="Excluir Caso"
         >
-          <Trash2 size={18} />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
         </button>
+        <button 
+          onClick={enableEditMode}
+=======
 
         <button
           type="button"
+          className="neu-button"
           onClick={enableTitleEditingMode}
+>>>>>>> Stashed changes
           style={{
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
+            borderRadius: '50%',
+            width: '36px',
+            height: '36px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             color: 'var(--color-semantic-text-textlight)',
-            padding: 'var(--spacing-min)',
+<<<<<<< Updated upstream
+            padding: 'var(--spacing-min)'
+=======
+            flexShrink: 0,
+>>>>>>> Stashed changes
           }}
           title="Editar Título"
         >
-          <Edit size={18} />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
         </button>
-
         {isEditingTitle ? (
-          <input
-            ref={titleInputElementRef}
-            value={sessionTitle}
-            onChange={(event) => setSessionTitle(event.target.value)}
-            onBlur={(event) => handleTitleBlurOrSubmit(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                handleTitleBlurOrSubmit(event.currentTarget.value);
-              }
+          <input 
+            ref={titleInputRef}
+            value={chatTitle}
+            onChange={(e) => setChatTitle(e.target.value)}
+            onBlur={(e) => handleTitleChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleTitleChange(e.currentTarget.value);
             }}
             placeholder="Nome da Sessão..."
-            style={{
-              fontSize: '1.2rem',
-              fontWeight: 600,
+            style={{ 
+              fontSize: '1.2rem', 
+              fontWeight: 600, 
               color: 'var(--color-semantic-text-textdark)',
               background: 'transparent',
               border: 'none',
               borderBottom: '2px solid var(--color-semantic-text-textlight)',
               outline: 'none',
               width: '100%',
-              fontFamily: 'var(--typography-fontfamilies-mainsans)',
+              fontFamily: 'var(--typography-fontfamilies-mainsans)'
             }}
           />
         ) : (
-          <h1
-            style={{
-              fontSize: '1.2rem',
-              fontWeight: 600,
-              color: 'var(--color-semantic-text-textdark)',
-              fontFamily: 'var(--typography-fontfamilies-mainsans)',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {sessionTitle}
+          <h1 style={{ 
+            fontSize: '1.2rem', 
+            fontWeight: 600, 
+            color: 'var(--color-semantic-text-textdark)',
+            fontFamily: 'var(--typography-fontfamilies-mainsans)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}>
+            {chatTitle}
           </h1>
         )}
       </div>
 
+<<<<<<< Updated upstream
+      <div style={{
+        flex: 1,
+        margin: 'var(--spacing-md)',
+        backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+        boxShadow: 'var(--shadow-extruded-large)',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <main 
+          ref={mainRef}
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto', 
+            padding: 'var(--spacing-lg)', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 'var(--spacing-lg)' 
+          }}>
+          {!topicSelected ? (
+=======
       {/* Main Simulation Workspace */}
       <div
         style={{
           flex: 1,
           margin: 'var(--spacing-md)',
           backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
-          boxShadow: 'var(--shadow-extruded-large)',
+          boxShadow: 'var(--shadow-extruded-flat)',
           borderRadius: '24px',
           overflow: 'hidden',
           position: 'relative',
@@ -534,18 +745,18 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
         >
           {!hasSelectedTopic ? (
             /* Topic Selection Screen */
+>>>>>>> Stashed changes
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Selecione um Tema de Estudo</h2>
               <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center', maxWidth: '400px' }}>
                 Escolha uma das especialidades abaixo ou digite um tema específico para gerar um caso clínico focado.
               </p>
-
+              
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-ml)', justifyContent: 'center', maxWidth: '500px' }}>
-                {PREDEFINED_STUDY_TOPICS.map((topicName) => (
+                {['Cardiologia', 'Neurologia', 'Pediatria', 'Infectologia', 'Terapia Intensiva'].map(topic => (
                   <button
-                    key={topicName}
-                    type="button"
-                    onClick={() => handleStartStudy(topicName)}
+                    key={topic}
+                    onClick={() => handleStartStudy(topic)}
                     className="neu-button"
                     style={{
                       border: 'none',
@@ -554,111 +765,94 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                       cursor: 'pointer',
                       color: 'var(--color-semantic-text-textdark)',
                       fontWeight: 500,
-                      fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                      fontFamily: 'var(--typography-fontfamilies-mainsans)'
                     }}
                   >
-                    {topicName}
+                    {topic}
                   </button>
                 ))}
               </div>
 
               <div style={{ display: 'flex', gap: 'var(--spacing-ml)', marginTop: 'var(--spacing-md)', width: '100%', maxWidth: '400px' }}>
-                <input
+                <input 
                   type="text"
+                  className="neu-input"
                   placeholder="Ou digite um tema (ex: Sepse)"
-                  value={customTopicInput}
-                  onChange={(event) => setCustomTopicInput(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' && customTopicInput.trim()) {
-                      handleStartStudy(customTopicInput.trim());
-                    }
-                  }}
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && customTopic.trim() && handleStartStudy(customTopic.trim())}
                   style={{
                     flex: 1,
-                    background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
-                    border: 'none',
                     borderRadius: '999px',
                     padding: 'var(--spacing-ml) var(--spacing-md)',
-                    boxShadow: 'var(--shadow-inset-medium)',
                     color: 'var(--color-semantic-text-textdark)',
                     fontFamily: 'var(--typography-fontfamilies-mainsans)',
-                    outline: 'none',
+<<<<<<< Updated upstream
+                    outline: 'none'
+=======
+>>>>>>> Stashed changes
                   }}
                 />
                 <button
-                  type="button"
-                  onClick={() => customTopicInput.trim() && handleStartStudy(customTopicInput.trim())}
-                  disabled={!customTopicInput.trim()}
+                  onClick={() => customTopic.trim() && handleStartStudy(customTopic.trim())}
+                  disabled={!customTopic.trim()}
                   className="neu-button"
                   style={{
                     border: 'none',
                     borderRadius: '50%',
                     width: '40px',
                     height: '40px',
-                    cursor: customTopicInput.trim() ? 'pointer' : 'not-allowed',
-                    opacity: customTopicInput.trim() ? 1 : 0.6,
+                    cursor: customTopic.trim() ? 'pointer' : 'not-allowed',
+                    opacity: customTopic.trim() ? 1 : 0.6,
                     color: 'var(--color-semantic-text-textdark)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'center'
                   }}
-                  title="Iniciar com tema personalizado"
                 >
-                  <Send size={16} />
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
                 </button>
               </div>
             </div>
           ) : (
-            /* Simulation Message Thread */
             <>
-              {messages.map((studyMessage, messageIndex) => (
-                <div
-                  key={studyMessage.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: studyMessage.role === 'user' ? 'flex-end' : 'flex-start',
-                  }}
-                >
-                  <div
-                    style={{
-                      maxWidth: '90%',
-                      padding: 'var(--spacing-ml) var(--spacing-md)',
-                      backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
-                      borderRadius:
-                        studyMessage.role === 'model' ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
-                      boxShadow: 'var(--shadow-extruded-flat)',
-                    }}
-                  >
-                    {studyMessage.isMCQ ? (
-                      <MultipleChoiceQuestion
-                        question={studyMessage.content}
-                        options={studyMessage.options || []}
-                        onSelectOption={(chosenOption) =>
-                          handleAnswerSelect(studyMessage.id, chosenOption)
-                        }
-                        disabled={studyMessage.answered || isLoadingAiResponse}
+<<<<<<< Updated upstream
+              {messages.map((msg) => (
+                <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ 
+                    maxWidth: '90%', 
+                    padding: 'var(--spacing-ml) var(--spacing-md)', 
+                    backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)', 
+                    borderRadius: msg.role === 'model' ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
+                    boxShadow: 'var(--shadow-extruded-flat)'
+                  }}>
+                    {msg.isMCQ ? (
+                      <MultipleChoiceQuestion 
+                        question={msg.content}
+                        options={msg.options || []}
+                        onSelect={(opt) => handleAnswerSelect(msg.id, opt)}
+                        disabled={msg.answered || loading}
                       />
                     ) : (
                       <>
-                        <div
-                          style={{
-                            fontFamily:
-                              studyMessage.role === 'model'
-                                ? 'var(--typography-fontfamilies-mainserif)'
-                                : 'var(--typography-fontfamilies-mainsans)',
+                        <div 
+                          style={{ 
+                            fontFamily: msg.role === 'model' ? 'var(--typography-fontfamilies-mainserif)' : 'var(--typography-fontfamilies-mainsans)',
                             lineHeight: '1.6',
                             whiteSpace: 'pre-wrap',
-                            color: 'var(--color-semantic-text-textdark)',
+                            color: 'var(--color-semantic-text-textdark)'
                           }}
                         >
-                          <ReactMarkdown>{studyMessage.content}</ReactMarkdown>
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
 
-                        {studyMessage.content.includes('Aviso do Sistema:') && (
+                        {msg.content.includes('Aviso do Sistema:') && (
                           <div style={{ marginTop: 'var(--spacing-md)' }}>
                             <button
-                              type="button"
-                              onClick={() => handleRetryInteraction(messageIndex)}
+                              onClick={() => handleRetry(messages.indexOf(msg))}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
@@ -670,10 +864,13 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                                 color: 'var(--color-semantic-text-textdark)',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                                fontFamily: 'var(--typography-fontfamilies-mainsans)'
                               }}
                             >
-                              <RotateCcw size={16} />
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                                <path d="M3 3v5h5"></path>
+                              </svg>
                               Tentar novamente
                             </button>
                           </div>
@@ -683,20 +880,244 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                   </div>
                 </div>
               ))}
+              {loading && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <div style={{ 
+                    padding: 'var(--spacing-ml) var(--spacing-md)', 
+                    backgroundColor: 'transparent',
+                    fontStyle: 'italic',
+                    color: 'var(--color-semantic-text-textlight)'
+                  }}>
+                    Analisando e gerando caso...
+                  </div>
+                </div>
+=======
+              {messages
+                .filter((studyMessage) => studyMessage.role === 'model')
+                .map((studyMessage) => (
+                  <div
+                    key={studyMessage.id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      maxWidth: '90%',
+                      margin: '0 auto',
+                      width: '100%',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: 'var(--spacing-ml) var(--spacing-md)',
+                        backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+                        borderRadius: '16px',
+                        boxShadow: 'var(--shadow-extruded-flat)',
+                      }}
+                    >
+                      {/* Tema escolhido pelo usuário — no topo */}
+                      <div
+                        style={{
+                          fontWeight: 600,
+                          color: 'var(--color-semantic-text-textdark)',
+                          fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                          marginBottom: 'var(--spacing-sm)',
+                        }}
+                      >
+                        {selectedTopic || sessionTitle.replace(/^Estudo:\s*/, '') || 'Tema de Estudo'}
+                      </div>
+
+                      <hr
+                        style={{
+                          border: 'none',
+                          borderTop: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                          margin: '12px 0',
+                        }}
+                      />
+
+                      {studyMessage.reliability && studyMessage.reliability !== 'high' && (
+                        <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+                          <ReliabilityBadge
+                            reliability={studyMessage.reliability}
+                            modelTier={studyMessage.modelTier}
+                          />
+                        </div>
+                      )}
+
+                      {/* Pergunta — logo abaixo do tema */}
+                      {studyMessage.isMCQ ? (
+                        <MultipleChoiceQuestion
+                          question={studyMessage.content}
+                          options={studyMessage.options || []}
+                          onSelectOption={(chosenOption) =>
+                            handleAnswerSelect(studyMessage.id, chosenOption)
+                          }
+                          disabled={studyMessage.answered || isLoadingAiResponse}
+                        />
+                      ) : (
+                        <>
+                          <div
+                            style={{
+                              fontFamily: 'var(--typography-fontfamilies-mainserif)',
+                              lineHeight: '1.6',
+                              whiteSpace: 'pre-wrap',
+                              color: 'var(--color-semantic-text-textdark)',
+                            }}
+                          >
+                            <ReactMarkdown>{studyMessage.content}</ReactMarkdown>
+                          </div>
+
+                          {isRetryableResponse(studyMessage.content) && (
+                            <div style={{ marginTop: 'var(--spacing-md)' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRetryInteraction(studyMessage.id)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--spacing-sm)',
+                                  background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+                                  border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                                  borderRadius: '16px',
+                                  padding: 'var(--spacing-sm) var(--spacing-md)',
+                                  color: 'var(--color-semantic-text-textdark)',
+                                  cursor: 'pointer',
+                                  fontWeight: 600,
+                                  fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                                }}
+                              >
+                                <RotateCcw size={16} />
+                                Tentar novamente em alguns instantes
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+              {/* Balão com indicador de carregamento enquanto o agente gera a pergunta */}
+              {isLoadingAiResponse && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxWidth: '90%',
+                    margin: '0 auto',
+                    width: '100%',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: 'var(--spacing-ml) var(--spacing-md)',
+                      backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+                      borderRadius: '16px',
+                      boxShadow: 'var(--shadow-extruded-flat)',
+                    }}
+                  >
+                    {/* Tema escolhido pelo usuário — no topo */}
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        color: 'var(--color-semantic-text-textdark)',
+                        fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                        marginBottom: 'var(--spacing-sm)',
+                      }}
+                    >
+                      {selectedTopic || sessionTitle.replace(/^Estudo:\s*/, '') || 'Tema de Estudo'}
+                    </div>
+
+                    <hr
+                      style={{
+                        border: 'none',
+                        borderTop: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                        margin: '12px 0',
+                      }}
+                    />
+
+                    {/* Indicador de carregamento idêntico à tela de Perguntas */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--spacing-sm)',
+                        fontFamily: 'var(--typography-fontfamilies-mainsans)',
+                        color: 'var(--color-semantic-text-textlight)',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      <Loader2 size={18} className="animate-spin" />
+                      Processando resposta...
+                    </div>
+                  </div>
+                </div>
+>>>>>>> Stashed changes
+              )}
             </>
           )}
           <div ref={endOfMessagesRef} />
         </main>
       </div>
+<<<<<<< Updated upstream
+      
+      {showDeleteModal && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+            padding: 'var(--spacing-xl)',
+            borderRadius: '24px',
+            boxShadow: 'var(--shadow-extruded-large)',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 var(--spacing-md) 0', color: 'var(--color-semantic-text-textdark)' }}>Excluir Sessão?</h3>
+            <p style={{ margin: '0 0 var(--spacing-xl) 0', color: 'var(--color-semantic-text-textlight)' }}>
+              Tem certeza que deseja excluir esta sessão? Todo o progresso será perdido para sempre.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  background: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-semantic-text-textdark)'
+                }}
+              >
+                Não excluir
+              </button>
+              <button 
+                onClick={handleDeleteChat}
+                style={{
+                  background: 'var(--color-semantic-status-error)',
+                  border: 'none',
+                  padding: 'var(--spacing-sm) var(--spacing-lg)',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  color: 'var(--color-primitive-white)'
+                }}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+=======
 
-      {/* Shared Delete Confirmation Dialog */}
-      <DeleteConfirmationModal
-        isOpen={isDeleteModalOpen}
-        title="Excluir Sessão?"
-        description="Tem certeza que deseja excluir esta sessão de estudo? Todo o histórico será perdido."
-        onConfirm={handleDeleteStudySession}
-        onCancel={() => setIsDeleteModalOpen(false)}
-      />
+>>>>>>> Stashed changes
     </div>
   );
 }

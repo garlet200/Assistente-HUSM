@@ -81,13 +81,12 @@ export function DeleteConfirmationModal({
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', justifyContent: 'center' }}>
           <button
             type="button"
+            className="neu-button"
             onClick={onCancel}
             style={{
               background: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
-              border: 'none',
               padding: 'var(--spacing-sm) var(--spacing-lg)',
               borderRadius: '999px',
-              cursor: 'pointer',
               fontWeight: 600,
               color: 'var(--color-semantic-text-textdark)',
             }}
@@ -97,13 +96,12 @@ export function DeleteConfirmationModal({
 
           <button
             type="button"
+            className="neu-button"
             onClick={onConfirm}
             style={{
               background: 'var(--color-semantic-status-error)',
-              border: 'none',
               padding: 'var(--spacing-sm) var(--spacing-lg)',
               borderRadius: '999px',
-              cursor: 'pointer',
               fontWeight: 600,
               color: 'var(--color-primitive-white)',
             }}

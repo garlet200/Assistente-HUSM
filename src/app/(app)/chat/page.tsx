@@ -2,151 +2,126 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
-
-interface ChatSessionSummary {
-  id: string;
-  title: string;
-  updated_at: string;
-}
-
-/**
- * Formats ISO timestamps into Portuguese Brazilian short date format.
- */
-function formatTimestampToLocaleString(dateString: string): string {
-  const dateObject = new Date(dateString);
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(dateObject);
-}
 
 export default function ChatHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-
-  const [chatSessions, setChatSessions] = useState<ChatSessionSummary[]>([]);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [chats, setChats] = useState<{ id: string, title: string, updated_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       router.push('/');
-      return;
+    } else {
+      sessionStorage.removeItem('activeChatId');
+      fetchChats();
     }
+  }, [user, router]);
 
-    sessionStorage.removeItem('activeChatId');
+  const fetchChats = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('chats')
+      .select('*')
+      .eq('module', 'chat')
+      .order('updated_at', { ascending: false });
 
-    const fetchUserChatSessions = async () => {
-      setIsLoadingHistory(true);
-
-      const { data: databaseChats, error: fetchError } = await supabase
-        .from('chats')
-        .select('id, title, updated_at')
-        .eq('module', 'chat')
-        .order('updated_at', { ascending: false });
-
-      if (databaseChats && !fetchError) {
-        setChatSessions(databaseChats);
-      }
-
-      setIsLoadingHistory(false);
-    };
-
-    fetchUserChatSessions();
-  }, [user, router, supabase]);
-
-  if (!user) {
-    return null;
-  }
-
-  const handleStartNewChat = () => {
-    router.push('/chat/new');
+    if (data && !error) {
+      setChats(data);
+    }
+    setLoading(false);
   };
 
-  const handleOpenChatSession = (selectedChatId: string) => {
-    router.push(`/chat/${selectedChatId}`);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
   };
+
+  if (!user) return null;
 
   return (
     <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>
-            Histórico Clínico
-          </h1>
-          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>
-            Acesse pesquisas anteriores ou inicie uma nova.
-          </p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>Histórico Clínico</h1>
+          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Acesse pesquisas anteriores ou inicie uma nova.</p>
         </div>
 
         <button
+<<<<<<< Updated upstream
+          onClick={() => router.push('/chat/new')}
+=======
           type="button"
+          className="neu-button"
           onClick={handleStartNewChat}
+>>>>>>> Stashed changes
           style={{
             background: 'var(--color-semantic-accent-accentprimary)',
-            border: 'none',
             borderRadius: '50%',
             width: '48px',
             height: '48px',
-            boxShadow: 'var(--shadow-extruded-medium)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'pointer',
             color: 'white',
-            flexShrink: 0,
+            flexShrink: 0
           }}
-          title="Novo caso clínico"
         >
-          <Plus size={24} />
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
         </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
-        {isLoadingHistory ? (
-          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>
-            Carregando histórico...
-          </p>
-        ) : chatSessions.length === 0 ? (
-          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>
-            Nenhum chat anterior encontrado.
-          </p>
+        {loading ? (
+          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>Carregando histórico...</p>
+        ) : chats.length === 0 ? (
+          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>Nenhum chat anterior encontrado.</p>
         ) : (
-          chatSessions.map((session) => (
+          chats.map((chat) => (
             <button
+<<<<<<< Updated upstream
+              key={chat.id}
+              onClick={() => router.push(`/chat/${chat.id}`)}
+=======
               key={session.id}
               type="button"
+              className="neu-button"
               onClick={() => handleOpenChatSession(session.id)}
+>>>>>>> Stashed changes
               style={{
-                background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
-                border: 'none',
                 borderRadius: '16px',
                 padding: 'var(--spacing-md-lg)',
-                boxShadow: 'var(--shadow-extruded-flat)',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                cursor: 'pointer',
                 textAlign: 'left',
+<<<<<<< Updated upstream
+                color: 'var(--color-semantic-text-textdark)'
+=======
                 color: 'var(--color-semantic-text-textdark)',
+                width: '100%',
+>>>>>>> Stashed changes
               }}
             >
               <div>
-                <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 'var(--spacing-min)' }}>
-                  {session.title}
-                </div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--color-semantic-text-textlight)' }}>
-                  {formatTimestampToLocaleString(session.updated_at)}
-                </div>
+                <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 'var(--spacing-min)' }}>{chat.title}</div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-semantic-text-textlight)' }}>{formatDate(chat.updated_at)}</div>
               </div>
               <div style={{ color: 'var(--color-semantic-accent-accentprimary)' }}>
-                <ChevronRight size={20} />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
               </div>
             </button>
           ))

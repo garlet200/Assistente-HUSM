@@ -1,0 +1,62 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin: 4px 0;
+}
+
+.questionContent {
+  font-family: var(--typography-fontfamilies-mainserif);
+  font-size: var(--typography-fontsizes-body, 16px);
+  font-weight: var(--typography-fontweights-regular, 400);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: var(--color-semantic-text-textdark);
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.optionButton {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
+  padding: var(--spacing-ml) var(--spacing-md);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  border-radius: var(--radius-radius-medium);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  color: var(--color-semantic-text-textdark);
+  border: 1px solid var(--color-semantic-boxshadow-boxshadowfxdark);
+  box-shadow: var(--shadow-extruded-flat);
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.optionButton:hover:not(:disabled) {
+  box-shadow: var(--shadow-extruded-flat);
+  border-color: var(--color-semantic-accent-accentsecondary);
+}
+
+.optionButton:active:not(:disabled) {
+  box-shadow: var(--shadow-inset-medium);
+}
+
+.optionButton.selected {
+  color: var(--color-semantic-accent-accentprimary);
+  border: 1.5px solid var(--color-semantic-accent-accentprimary);
+  box-shadow: var(--shadow-inset-medium);
+  font-weight: var(--typography-fontweights-semibold);
+}
+
+.optionButton:disabled:not(.selected) {
+  opacity: var(--opacity-md);
+  cursor: not-allowed;
+  box-shadow: none !important;
+}

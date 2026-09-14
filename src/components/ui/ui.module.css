@@ -3,26 +3,31 @@
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   color: var(--color-semantic-text-textdark);
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  font-weight: 600;
-  padding: 12px 24px;
+  font-weight: var(--typography-fontweights-semibold);
+  padding: var(--spacing-ml) var(--spacing-lg);
   border-radius: var(--radius-radius-small);
-  box-shadow: var(--shadow-extruded-flat);
+  box-shadow: var(--shadow-extruded-medium);
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 180ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 1rem;
+  gap: var(--spacing-sm);
+  font-size: var(--typography-fontsizes-buttons);
 }
 
-.button:hover {
-  box-shadow: var(--shadow-extruded-large);
+.button:hover:not(:disabled) {
+  box-shadow: var(--shadow-extruded-flat);
 }
 
-.button:active {
+.button:active:not(:disabled) {
   box-shadow: var(--shadow-inset-medium);
-  transform: translateY(1px);
+}
+
+.button:focus-visible {
+  box-shadow: var(--shadow-extruded-medium);
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 2px;
 }
 
 .button.primary {
@@ -30,9 +35,9 @@
 }
 
 .button:disabled {
-  opacity: 0.6;
+  opacity: var(--opacity-md);
   cursor: not-allowed;
-  box-shadow: var(--shadow-extruded-flat);
+  box-shadow: none !important;
 }
 
 .menuItem {
@@ -40,50 +45,59 @@
   background-color: transparent;
   color: var(--color-semantic-text-textdark);
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  font-weight: 500;
-  padding: 12px 24px;
+  font-weight: var(--typography-fontweights-semibold);
+  padding: var(--spacing-ml) var(--spacing-lg);
   border-radius: var(--radius-radius-small);
   box-shadow: none;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 180ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 1rem;
+  gap: var(--spacing-sm);
+  font-size: var(--typography-fontsizes-buttons);
 }
 
-.menuItem:active {
+.menuItem:hover:not(:disabled) {
+  box-shadow: var(--shadow-extruded-flat);
+}
+
+.menuItem:active:not(:disabled) {
   box-shadow: var(--shadow-inset-medium);
+}
+
+.menuItem:focus-visible {
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 2px;
 }
 
 .card {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   border-radius: var(--radius-radius-medium);
   box-shadow: var(--shadow-extruded-large);
-  padding: 24px;
+  padding: var(--spacing-lg);
 }
 
 .cardInset {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   border-radius: var(--radius-radius-medium);
   box-shadow: var(--shadow-inset-medium);
-  padding: 24px;
+  padding: var(--spacing-lg);
 }
 
 .inputWrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
   flex: 1;
   width: 100%;
 }
 
 .label {
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  font-weight: 500;
+  font-weight: var(--typography-fontweights-semibold);
   color: var(--color-semantic-text-textdark);
-  font-size: 0.9rem;
+  font-size: var(--typography-fontsizes-caption);
 }
 
 .input {
@@ -91,19 +105,19 @@
   border: none;
   border-radius: var(--radius-radius-small);
   box-shadow: var(--shadow-inset-medium);
-  padding: 12px 16px;
+  padding: var(--spacing-ml) var(--spacing-md);
   color: var(--color-semantic-text-textdark);
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  font-size: 1rem;
+  font-size: var(--typography-fontsizes-body);
   outline: none;
-  transition: box-shadow 0.2s ease-in-out;
+  transition: all 180ms ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .input:focus {
   box-shadow: var(--shadow-inset-medium);
-  outline: 2px solid var(--color-semantic-text-textlight);
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
 }
 
 .input::placeholder {
@@ -113,21 +127,21 @@
 .inputPill {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   border: none;
-  border-radius: 9999px;
+  border-radius: var(--radius-radius-full);
   box-shadow: var(--shadow-inset-medium);
-  padding: 16px 24px;
+  padding: var(--spacing-md) var(--spacing-lg);
   color: var(--color-semantic-text-textdark);
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  font-size: 1rem;
+  font-size: var(--typography-fontsizes-body);
   outline: none;
-  transition: box-shadow 0.2s ease-in-out;
+  transition: all 180ms ease;
   width: 100%;
   box-sizing: border-box;
 }
 
 .inputPill:focus {
   box-shadow: var(--shadow-inset-medium);
-  outline: 2px solid var(--color-semantic-text-textlight);
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
 }
 
 .inputPill::placeholder {

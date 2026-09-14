@@ -74,6 +74,21 @@ a {
 }
 
 /* Base Neumorphic Classes - if needed globally, mas usaremos aqui para simplificar as lógicas */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  transform-origin: center;
+}
+
 .neu-container {
   background: var(--color-semantic-backgroundcolor-backgrounddefault);
   box-shadow: var(--shadow-extruded-large);
@@ -82,16 +97,43 @@ a {
 
 .neu-button {
   background: var(--color-semantic-backgroundcolor-backgrounddefault);
-  box-shadow: var(--shadow-extruded-medium); /* Use extruded by default */
-  transition: box-shadow 0.2s ease-in-out;
+  box-shadow: var(--shadow-extruded-medium);
+  transition: all 180ms ease;
+  border: none;
+  cursor: pointer;
 }
-.neu-button:active {
-  box-shadow: var(--shadow-inset-medium) !important;
+
+.neu-button:hover:not(:disabled) {
+  box-shadow: var(--shadow-extruded-flat);
+}
+
+.neu-button:active:not(:disabled) {
+  box-shadow: var(--shadow-inset-medium);
+}
+
+.neu-button:focus-visible {
+  box-shadow: var(--shadow-extruded-medium);
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 2px;
+}
+
+.neu-button:disabled {
+  box-shadow: none !important;
+  opacity: var(--opacity-md);
+  cursor: not-allowed;
 }
 
 .neu-input {
-  box-shadow: var(--shadow-inset-medium) !important;
+  box-shadow: var(--shadow-inset-medium);
   background: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border: none;
+  outline: none;
+  transition: all 180ms ease;
+}
+
+.neu-input:focus {
+  box-shadow: var(--shadow-inset-medium);
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
 }
 
 .chat-footer {

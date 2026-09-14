@@ -1,7 +1,7 @@
 'use client';
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
+import ReactMarkdown from 'react-markdown';
+import styles from './MultipleChoiceQuestion.module.css';
 
 interface MultipleChoiceQuestionProps {
   question: string;
@@ -12,6 +12,7 @@ interface MultipleChoiceQuestionProps {
 
 /**
  * Interactive Multiple Choice Question (MCQ) component used during clinical case simulations in Study mode.
+ * Styled with decreased neumorphic depth for options and high-readability serif typography for questions.
  */
 export function MultipleChoiceQuestion({
   question,
@@ -27,31 +28,27 @@ export function MultipleChoiceQuestion({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', margin: '8px 0' }}>
-      <p style={{ fontWeight: 600, fontFamily: 'var(--typography-fontfamilies-mainsans)' }}>
-        {question}
-      </p>
+    <div className={styles.container}>
+      {/* Question / Clinical Case content styled with Plex Serif matching chat bubbles */}
+      <div className={styles.questionContent}>
+        <ReactMarkdown>{question}</ReactMarkdown>
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-ml)' }}>
+      {/* Multiple-choice option cards with decreased neumorphic elevation */}
+      <div className={styles.optionsList}>
         {options.map((optionText, optionIndex) => {
           const isSelected = userSelectedOption === optionText;
 
           return (
-            <Button
+            <button
               key={optionIndex}
-              variant={isSelected ? 'primary' : 'default'}
+              type="button"
               disabled={disabled}
               onClick={() => handleOptionClick(optionText)}
-              style={{
-                justifyContent: 'flex-start',
-                textAlign: 'left',
-                padding: 'var(--spacing-ml) var(--spacing-md)',
-                fontFamily: 'var(--typography-fontfamilies-mainsans)',
-                lineHeight: '1.4',
-              }}
+              className={`${styles.optionButton} ${isSelected ? styles.selected : ''}`}
             >
               {optionText}
-            </Button>
+            </button>
           );
         })}
       </div>
