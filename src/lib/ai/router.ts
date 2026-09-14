@@ -1,91 +1,21 @@
-<<<<<<< Updated upstream
-import { AIRequest, AIResponse, PrivacyLevel } from './types';
-import { getBestModelForRole, getFallbackModelForRole } from './registry';
-import { deIdentify, requiresHighPrivacy } from './privacyGate';
-=======
 import { AIRequest, AIResponse, AIProvider } from './types';
 import { CASCADE_CONFIG, getModelIdForTier, getCascadeTimeoutMs } from './cascade.config';
 import { logFallbackEvent, FallbackLogEntry } from './analytics';
 import { deIdentify } from './privacyGate';
->>>>>>> Stashed changes
 import { GeminiProvider } from './providers/gemini';
 import { searchPubMed } from './pubmed';
 
-export class AIOrchestrator {
-  private providers: Map<string, any> = new Map();
-
-  constructor() {
-    // Initialize providers (in a real app, API keys come from secure env vars)
-    if (process.env.GEMINI_API_KEY) {
-      this.providers.set('gemini', new GeminiProvider(process.env.GEMINI_API_KEY));
-    }
-  }
-
-  async processRequest(request: AIRequest): Promise<AIResponse> {
-    // 1. Privacy Gate
-    const sanitizedPrompt = deIdentify(request.prompt);
-    
-    // Check if prompt demands high privacy based on content
-    const needsHighPrivacy = requiresHighPrivacy(request.prompt);
-    const requiredPrivacyLevel: PrivacyLevel = needsHighPrivacy ? 'high' : 'medium';
-    
-    // 2. Model Routing
-    const bestModel = getBestModelForRole(request.role, requiredPrivacyLevel);
-    
-    if (!bestModel) {
-      throw new Error(`Nenhum modelo disponível para a tarefa: ${request.role} com nível de privacidade ${requiredPrivacyLevel}`);
-    }
-
-    const provider = this.providers.get(bestModel.provider);
-    
-    const generateErrorResponse = (errorMsg: string, isJson: boolean): AIResponse => {
-      const displayMsg = `⚠️ **Aviso do Sistema: Limite de Requisições Atingido**\n\nNossos servidores atingiram a capacidade máxima de processamento de IA ou o limite da base de dados.\n\nComo o Assistente_HUSM é uma ferramenta acadêmica, operamos com cotas de acesso na versão gratuita para garantir a disponibilidade. Por favor, tente novamente em alguns instantes.\n\n*(Detalhe técnico: ${errorMsg})*`;
-      
-      return {
-        text: isJson 
-          ? JSON.stringify({ content: displayMsg, isMCQ: false, options: [] })
-          : displayMsg,
-        providerId: 'system',
-        modelId: 'error-handler',
-        citations: []
-      };
-    };
-
-    if (!provider) {
-      console.warn(`Provedor ${bestModel.provider} não configurado.`);
-      return generateErrorResponse('Provedor de IA não configurado', request.responseFormat === 'json');
-    }
-
-    // Update request with sanitized prompt and system instructions
-    let pubmedContext = '';
-    let pmidCitations: string[] = [];
-
-    // If general chat, do Retrieval
-    if (request.role === 'MODEL_ROLE_CLINICAL_REASONING') {
-      try {
-        const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
-        const extractionResponse = await provider.generate({ prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' }, bestModel.id);
-        const pubmedQuery = extractionResponse.text.trim();
-        
-        const results = await searchPubMed(pubmedQuery);
-        if (results.pmids.length > 0) {
-          pubmedContext = `\n\nCONTEXTO DE EVIDÊNCIAS OBTIDAS DO PUBMED (Use estritamente estas informações se aplicável):\n${results.context}`;
-          pmidCitations = results.pmids.map(p => `PMID: ${p.id} | ${p.title}`);
-        }
-      } catch (e) {
-        console.error("PubMed RAG failed", e);
-      }
-    }
-
-    const safeRequest: AIRequest = {
-      ...request,
-      prompt: sanitizedPrompt + pubmedContext,
-      systemInstruction: request.systemInstruction || `Você é o "Assistente_HUSM", uma interface de raciocínio clínico e busca de evidências. Sua natureza é estritamente a de uma ferramenta de processamento de informação. Você deve operar com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use emojis em nenhuma circunstância.
+/**
+ * Builds the official Assistente_HUSM system instructions for clinical reasoning.
+ * Ensures the unemotional, protocol-driven persona and required disclaimer.
+ */
+function buildAssistenteHusmSystemInstruction(): string {
+  return `Você é o "Assistente_HUSM", uma interface de raciocínio clínico e busca de evidências. Sua natureza é estritamente a de uma ferramenta de processamento de informação. Você deve operar com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use emojis em nenhuma circunstância.
 
 TAREFAS - FUNÇÃO
 Sua operação no chat livre é focada em:
-1. REFERÊNCIA CONSOLIDADA: Fornecer informações minuciosas, abrangentes e diferenciais, baseadas estritamente nas fontes listadas.
-2. SUGESTÃO DE PESQUISA: Após a resposta principal, sugira 2 a 3 tópicos de pesquisa aprofundada ou palavras-chave relevantes para estudo. IMPORTANTE: Formate CADA sugestão EXATAMENTE como um link no formato markdown apontando para "#sugestao-TEXTO", por exemplo: [Hipertensão na gravidez](#sugestao-Hipertensão na gravidez). Não use marcadores de lista, apenas os links.
+1. REFERÊNCIA CONSOLIDADA: Fornecer informações minuciosas, abrangentes e diferenciais, baseadas estritamente nas fontes listadas. Não cite ou liste referências numéricas, IDs ou PMIDs no corpo do texto (as fontes serão listadas automaticamente na seção RAG).
+2. SUGESTÃO DE PESQUISA: Após a resposta principal, sugira 2 a 3 tópicos de pesquisa aprofundada ou palavras-chave. IMPORTANTE: Formate CADA sugestão EXATAMENTE como um link no formato markdown apontando para "#sugestao-TEXTO", substituindo espaços no link por "%20", por exemplo: [Hipertensão na gravidez](#sugestao-Hipertensão%20na%20gravidez). Não use marcadores de lista, apenas os links.
 
 RESTRIÇÕES - REGRAS INEGOCIÁVEIS
 A. Restrições de Segurança (Não Clínico)
@@ -101,66 +31,6 @@ FORMATO - CRITÉRIOS DE SUCESSO
 1. Linguagem: Use terminologia médica precisa, vocabulário vasto e estruturas frasais variadas. Evite uso excessivo de formatação Markdown (use negrito apenas para o estritamente necessário).
 2. Verificação: A resposta deve ser minuciosamente detalhada, incorporando detalhes fisiopatológicos, epidemiológicos e farmacológicos sempre que relevante.
 3. Aviso Obrigatório (Disclaimer): Toda resposta DEVE ser finalizada exatamente com o seguinte texto:
-<<<<<<< Updated upstream
-"AVISO: Esta é uma ferramenta educacional e não substitui o julgamento ou o cuidado de um profissional de saúde licenciado."`
-    };
-
-    // 3. Provider Execution
-    try {
-      const response = await provider.generate(safeRequest, bestModel.id);
-      if (pmidCitations.length > 0) {
-        response.citations = [...(response.citations || []), ...pmidCitations];
-      }
-      return response;
-    } catch (error: any) {
-      if (error?.message && (error.message.includes('429') || error.message.includes('503') || error.message.includes('Quota') || error.message.includes('demand'))) {
-        const fallbackModel = getFallbackModelForRole(request.role, bestModel.id, requiredPrivacyLevel);
-        if (fallbackModel) {
-          console.warn(`Fallback: Alternando de ${bestModel.id} para ${fallbackModel.id} devido a falha da API.`);
-          try {
-            const fallbackProvider = this.providers.get(fallbackModel.provider);
-            if (fallbackProvider) {
-              const fbResponse = await fallbackProvider.generate(safeRequest, fallbackModel.id);
-              
-              const warningText = `\n\n> ⚠️ **Modo de Resiliência Ativo:** Devido à alta demanda ou limite da cota gratuita na API principal, esta resposta foi gerada utilizando o modelo de *backup* (${fallbackModel.id}), que pode apresentar menos processamento cognitivo ou menor capacidade de raciocínio crítico em casos altamente complexos.`;
-              
-              if (request.responseFormat === 'json') {
-                try {
-                  const parsed = JSON.parse(fbResponse.text);
-                  parsed.content = parsed.content + warningText;
-                  fbResponse.text = JSON.stringify(parsed);
-                } catch (e) {
-                  // Fallback to unparsed
-                }
-              } else {
-                fbResponse.text = fbResponse.text + warningText;
-              }
-
-              if (pmidCitations.length > 0) {
-                fbResponse.citations = [...(fbResponse.citations || []), ...pmidCitations];
-              }
-              return fbResponse;
-            }
-          } catch (fbError) {
-             console.error("Fallback também falhou:", fbError);
-          }
-        }
-      }
-
-      console.error(`Provider ${provider.name} falhou:`, error);
-      let errorDetail = 'Erro desconhecido da API';
-      if (error?.message) {
-        if (error.message.includes('429') || error.message.includes('Quota')) {
-          errorDetail = 'Cota excedida na API do Gemini (Free Tier)';
-        } else if (error.message.includes('503') || error.message.includes('demand')) {
-          errorDetail = 'Alta demanda temporária nos servidores do Google';
-        } else {
-          errorDetail = error.message.substring(0, 50) + '...';
-        }
-      }
-      return generateErrorResponse(errorDetail, request.responseFormat === 'json');
-    }
-=======
 "AVISO: Esta é uma ferramenta educacional e não substitui o julgamento ou o cuidado de um profissional de saúde licenciado."`;
 }
 
@@ -383,7 +253,6 @@ export class AIOrchestrator {
 
     // 5. If all 3 models failed
     return createAllModelsFailedResponse(isJsonFormat, fallbackEvents);
->>>>>>> Stashed changes
   }
 }
 
