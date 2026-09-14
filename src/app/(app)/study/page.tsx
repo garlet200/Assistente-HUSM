@@ -2,68 +2,105 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
+
+interface StudySessionSummary {
+  id: string;
+  title: string;
+  updated_at: string;
+}
+
+/**
+ * Formats ISO timestamps into Portuguese Brazilian short date and time.
+ */
+function formatTimestampToLocaleString(dateString: string): string {
+  const dateObject = new Date(dateString);
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(dateObject);
+}
 
 export default function StudyHub() {
   const router = useRouter();
   const { user } = useAuth();
   const supabase = createClient();
-  const [sessions, setSessions] = useState<{id: string, title: string, updated_at: string}[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const loadSessions = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('chats')
-      .select('*')
-      .eq('user_id', user?.id)
-      .eq('module', 'study')
-      .order('updated_at', { ascending: false });
 
-    if (!error && data) {
-      setSessions(data);
-    }
-    setLoading(false);
-  };
+  const [studySessions, setStudySessions] = useState<StudySessionSummary[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
 
   useEffect(() => {
     if (!user) {
       router.push('/');
-    } else {
-      sessionStorage.removeItem('activeStudyId');
-      loadSessions();
+      return;
     }
-  }, [user, router]);
 
-  const createNewSession = async () => {
-    const { data, error } = await supabase
+    sessionStorage.removeItem('activeStudyId');
+
+    const fetchUserStudySessions = async () => {
+      setIsLoadingSessions(true);
+
+      const { data: databaseSessions, error: fetchError } = await supabase
+        .from('chats')
+        .select('id, title, updated_at')
+        .eq('user_id', user.id)
+        .eq('module', 'study')
+        .order('updated_at', { ascending: false });
+
+      if (!fetchError && databaseSessions) {
+        setStudySessions(databaseSessions);
+      }
+
+      setIsLoadingSessions(false);
+    };
+
+    fetchUserStudySessions();
+  }, [user, router, supabase]);
+
+  if (!user) {
+    return null;
+  }
+
+  const handleCreateNewStudySession = async () => {
+    const { data: createdSession, error: creationError } = await supabase
       .from('chats')
       .insert({
-        user_id: user?.id,
+        user_id: user.id,
         title: 'Nova Sessão de Estudo',
-        module: 'study'
+        module: 'study',
       })
       .select()
       .single();
 
-    if (!error && data) {
-      router.push(`/study/${data.id}`);
+    if (!creationError && createdSession) {
+      router.push(`/study/${createdSession.id}`);
     }
   };
 
-  if (!user) return null;
+  const handleOpenStudySession = (selectedSessionId: string) => {
+    router.push(`/study/${selectedSessionId}`);
+  };
 
   return (
     <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>Sessões de Estudo</h1>
-          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Pratique raciocínio clínico com casos simulados.</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>
+            Sessões de Estudo
+          </h1>
+          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>
+            Pratique raciocínio clínico com casos simulados.
+          </p>
         </div>
-        
-        <button 
-          onClick={createNewSession}
+
+        <button
+          type="button"
+          onClick={handleCreateNewStudySession}
           style={{
             background: 'var(--color-semantic-accent-accentprimary)',
             border: 'none',
@@ -76,26 +113,29 @@ export default function StudyHub() {
             justifyContent: 'center',
             cursor: 'pointer',
             color: 'white',
-            flexShrink: 0
+            flexShrink: 0,
           }}
+          title="Nova sessão de estudo"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <Plus size={24} />
         </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginTop: 'var(--spacing-md)' }}>
-        {loading ? (
-          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Carregando sessões...</p>
-        ) : sessions.length === 0 ? (
-          <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Nenhuma sessão de estudo iniciada ainda. Comece uma nova!</p>
+        {isLoadingSessions ? (
+          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>
+            Carregando sessões...
+          </p>
+        ) : studySessions.length === 0 ? (
+          <p style={{ color: 'var(--color-semantic-text-textlight)', textAlign: 'center' }}>
+            Nenhuma sessão de estudo iniciada ainda. Comece uma nova!
+          </p>
         ) : (
-          sessions.map((session) => (
-            <button 
+          studySessions.map((session) => (
+            <button
               key={session.id}
-              onClick={() => router.push(`/study/${session.id}`)}
+              type="button"
+              onClick={() => handleOpenStudySession(session.id)}
               style={{
                 background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                 border: 'none',
@@ -107,19 +147,19 @@ export default function StudyHub() {
                 alignItems: 'center',
                 cursor: 'pointer',
                 textAlign: 'left',
-                color: 'var(--color-semantic-text-textdark)'
+                color: 'var(--color-semantic-text-textdark)',
               }}
             >
               <div>
-                <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 'var(--spacing-min)' }}>{session.title}</div>
+                <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: 'var(--spacing-min)' }}>
+                  {session.title}
+                </div>
                 <div style={{ fontSize: '0.875rem', color: 'var(--color-semantic-text-textlight)' }}>
-                  {new Date(session.updated_at).toLocaleDateString()} {new Date(session.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {formatTimestampToLocaleString(session.updated_at)}
                 </div>
               </div>
               <div style={{ color: 'var(--color-semantic-accent-accentprimary)' }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
+                <ChevronRight size={20} />
               </div>
             </button>
           ))

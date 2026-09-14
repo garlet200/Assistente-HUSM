@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import styles from './ui.module.css';
+import { MessageSquare, BookOpen, Grid } from 'lucide-react';
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -11,33 +12,17 @@ export function BottomNav() {
     { 
       path: '/chat', 
       label: 'Clínico',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
-      )
+      icon: <MessageSquare size={24} />
     },
     { 
       path: '/study', 
       label: 'Estudos',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-        </svg>
-      )
+      icon: <BookOpen size={24} />
     },
     { 
       path: '/tools', 
       label: 'Ferramentas',
-      icon: (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-      )
+      icon: <Grid size={24} />
     },
   ];
 

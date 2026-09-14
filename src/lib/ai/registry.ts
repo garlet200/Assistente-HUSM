@@ -1,4 +1,4 @@
-import { ModelDefinition } from './types';
+import { ModelDefinition, ModelRole } from './types';
 
 export const ModelRegistry: ModelDefinition[] = [
   {
@@ -24,12 +24,12 @@ export const ModelRegistry: ModelDefinition[] = [
   }
 ];
 
-export function getBestModelForRole(role: string, requiredPrivacy: string = 'medium'): ModelDefinition | null {
+export function getBestModelForRole(role: ModelRole, requiredPrivacy: string = 'medium'): ModelDefinition | null {
   // Simple Free-First Router logic:
   // Order: Privacy > Cost > Capabilities
   
   const suitableModels = ModelRegistry.filter(m => 
-    m.supportedRoles.includes(role as any)
+    m.supportedRoles.includes(role)
   );
 
   // Filter by privacy
@@ -46,9 +46,9 @@ export function getBestModelForRole(role: string, requiredPrivacy: string = 'med
   return privacyFiltered[0];
 }
 
-export function getFallbackModelForRole(role: string, primaryModelId: string, requiredPrivacy: string = 'medium'): ModelDefinition | null {
+export function getFallbackModelForRole(role: ModelRole, primaryModelId: string, requiredPrivacy: string = 'medium'): ModelDefinition | null {
   const suitableModels = ModelRegistry.filter(m => 
-    m.supportedRoles.includes(role as any) && m.id !== primaryModelId
+    m.supportedRoles.includes(role) && m.id !== primaryModelId
   );
 
   const privacyFiltered = suitableModels.filter(m => {

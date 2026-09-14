@@ -1,24 +1,33 @@
-export function deIdentify(text: string): string {
-  // A simple Regex-based de-identification layer for the prototype.
-  // In production, this would use a dedicated NLP model.
-  
-  let sanitized = text;
-  
-  // CPF Mask (000.000.000-00)
-  sanitized = sanitized.replace(/\d{3}\.\d{3}\.\d{3}-\d{2}/g, '[CPF CENSURADO]');
-  
-  // HUSM Chart Number (Prontuário ex: 123456/7)
-  sanitized = sanitized.replace(/\b\d{5,6}\/\d{1}\b/g, '[PRONTUÁRIO CENSURADO]');
-  
-  // Common Names (Mock representation)
-  // Just replacing some explicit trigger words for the prototype
-  sanitized = sanitized.replace(/Paciente (Maria|João|José|Ana|Carlos) [A-Za-z]+/gi, 'Paciente [NOME CENSURADO]');
-  
-  return sanitized;
+/**
+ * Privacy Gate: Sanitization and De-identification layer for LGPD compliance.
+ * Protects Brazilian Personally Identifiable Information (PII) and hospital medical record numbers
+ * before prompt text is transmitted to external model providers.
+ */
+
+const BRAZILIAN_CPF_PATTERN = /\d{3}\.\d{3}\.\d{3}-\d{2}/g;
+const HOSPITAL_RECORD_NUMBER_PATTERN = /\b\d{5,6}\/\d{1}\b/g;
+const COMMON_PATIENT_NAME_SAMPLE_PATTERN = /Paciente (Maria|João|José|Ana|Carlos) [A-Za-z]+/gi;
+
+const HIGH_PRIVACY_TRIGGER_KEYWORD = 'sigilo absoluto';
+
+/**
+ * Replaces sensitive identifiers (CPF, Prontuário, identifiable names) with redacted placeholders.
+ */
+export function deIdentify(rawInputText: string): string {
+  let sanitizedText = rawInputText;
+
+  sanitizedText = sanitizedText.replace(BRAZILIAN_CPF_PATTERN, '[CPF CENSURADO]');
+  sanitizedText = sanitizedText.replace(HOSPITAL_RECORD_NUMBER_PATTERN, '[PRONTUÁRIO CENSURADO]');
+  sanitizedText = sanitizedText.replace(COMMON_PATIENT_NAME_SAMPLE_PATTERN, 'Paciente [NOME CENSURADO]');
+
+  return sanitizedText;
 }
 
-export function requiresHighPrivacy(text: string): boolean {
-  // If we detect highly sensitive markers that might have slipped, we demand local execution.
-  // E.g., if there's the word "identificável", we force local.
-  return text.toLowerCase().includes('sigilo absoluto');
+/**
+ * Checks whether the prompt contains explicit instructions demanding high confidentiality
+ * that would require local, on-premise execution rather than cloud APIs.
+ */
+export function requiresHighPrivacy(promptText: string): boolean {
+  const normalizedText = promptText.toLowerCase();
+  return normalizedText.includes(HIGH_PRIVACY_TRIGGER_KEYWORD);
 }

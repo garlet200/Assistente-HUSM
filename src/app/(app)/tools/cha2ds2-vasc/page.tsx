@@ -2,19 +2,70 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
+interface Cha2ds2VascCriteria {
+  hasCongestiveHeartFailure: boolean;
+  hasHypertension: boolean;
+  isAge75YearsOrOlder: boolean;
+  hasDiabetesMellitus: boolean;
+  hasPriorStrokeOrTiaOrThromboembolism: boolean;
+  hasVascularDisease: boolean;
+  isAge65To74Years: boolean;
+  isFemaleSexCategory: boolean;
+}
+
+const INITIAL_CRITERIA_STATE: Cha2ds2VascCriteria = {
+  hasCongestiveHeartFailure: false,
+  hasHypertension: false,
+  isAge75YearsOrOlder: false,
+  hasDiabetesMellitus: false,
+  hasPriorStrokeOrTiaOrThromboembolism: false,
+  hasVascularDisease: false,
+  isAge65To74Years: false,
+  isFemaleSexCategory: false,
+};
+
+const CRITERIA_DEFINITIONS: Array<{
+  key: keyof Cha2ds2VascCriteria;
+  label: string;
+  points: number;
+}> = [
+  { key: 'hasCongestiveHeartFailure', label: 'Insuficiência Cardíaca Congestiva (+1)', points: 1 },
+  { key: 'hasHypertension', label: 'Hipertensão (+1)', points: 1 },
+  { key: 'isAge75YearsOrOlder', label: 'Idade ≥ 75 anos (+2)', points: 2 },
+  { key: 'hasDiabetesMellitus', label: 'Diabetes Mellitus (+1)', points: 1 },
+  { key: 'hasPriorStrokeOrTiaOrThromboembolism', label: 'Stroke / AIT / Tromboembolismo prévio (+2)', points: 2 },
+  { key: 'hasVascularDisease', label: 'Doença Vascular (+1)', points: 1 },
+  { key: 'isAge65To74Years', label: 'Idade 65-74 anos (+1)', points: 1 },
+  { key: 'isFemaleSexCategory', label: 'Sexo Feminino (+1)', points: 1 },
+];
+
+/**
+ * Provides clinical risk guidance based on calculated CHA2DS2-VASc score.
+ * Structured with explicit branches instead of nested ternaries for readable auditability.
+ */
+function getClinicalRiskRecommendation(totalCalculatedScore: number): string {
+  if (totalCalculatedScore === 0) {
+    return 'Risco baixo. Anticoagulação geralmente não recomendada.';
+  }
+
+  if (totalCalculatedScore === 1) {
+    return 'Risco intermediário. Considerar anticoagulação oral.';
+  }
+
+  return 'Risco alto. Anticoagulação oral recomendada na ausência de contraindicações.';
+}
+
 export default function Cha2ds2VascCalculator() {
   const router = useRouter();
   const { user } = useAuth();
-  const [score, setScore] = useState<number | null>(null);
 
-  // Local Zero-LLM Deterministic Tool (CHA2DS2-VASc)
-  const [calcState, setCalcState] = useState({
-    c: false, h: false, a2: false, d: false, s2: false, v: false, a: false, sc: false
-  });
+  const [criteriaState, setCriteriaState] = useState<Cha2ds2VascCriteria>(INITIAL_CRITERIA_STATE);
+  const [calculatedScore, setCalculatedScore] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -26,24 +77,30 @@ export default function Cha2ds2VascCalculator() {
     return null;
   }
 
-  const calculateScore = () => {
-    let s = 0;
-    if (calcState.c) s += 1; // Congestive heart failure
-    if (calcState.h) s += 1; // Hypertension
-    if (calcState.a2) s += 2; // Age >= 75
-    if (calcState.d) s += 1; // Diabetes
-    if (calcState.s2) s += 2; // Stroke/TIA
-    if (calcState.v) s += 1; // Vascular disease
-    if (calcState.a) s += 1; // Age 65-74
-    if (calcState.sc) s += 1; // Sex category (female)
-    setScore(s);
+  const handleToggleCriterion = (criterionKey: keyof Cha2ds2VascCriteria, isChecked: boolean) => {
+    setCriteriaState((previousState) => ({
+      ...previousState,
+      [criterionKey]: isChecked,
+    }));
+  };
+
+  const handleCalculateScore = () => {
+    let accumulatedScore = 0;
+
+    for (const criterion of CRITERIA_DEFINITIONS) {
+      if (criteriaState[criterion.key]) {
+        accumulatedScore += criterion.points;
+      }
+    }
+
+    setCalculatedScore(accumulatedScore);
   };
 
   return (
     <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
-      
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-        <button 
+        <button
+          type="button"
           onClick={() => router.push('/tools')}
           style={{
             background: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
@@ -56,13 +113,11 @@ export default function Cha2ds2VascCalculator() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--color-semantic-text-textdark)'
+            color: 'var(--color-semantic-text-textdark)',
           }}
+          title="Voltar para ferramentas"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
+          <ArrowLeft size={20} />
         </button>
         <h1 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Voltar</h1>
       </div>
@@ -72,38 +127,36 @@ export default function Cha2ds2VascCalculator() {
         <p style={{ fontSize: '0.875rem', color: 'var(--color-semantic-text-textlight)', marginBottom: 'var(--spacing-md)' }}>
           Execução 100% local no dispositivo. A IA não é necessária para cálculos determinísticos.
         </p>
-        
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
-          {Object.entries({
-            c: 'Insuficiência Cardíaca Congestiva (+1)',
-            h: 'Hipertensão (+1)',
-            a2: 'Idade ≥ 75 anos (+2)',
-            d: 'Diabetes Mellitus (+1)',
-            s2: 'Stroke / AIT / Tromboembolismo prévio (+2)',
-            v: 'Doença Vascular (+1)',
-            a: 'Idade 65-74 anos (+1)',
-            sc: 'Sexo Feminino (+1)',
-          }).map(([key, label]) => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-              <input 
-                type="checkbox" 
-                checked={calcState[key as keyof typeof calcState]}
-                onChange={(e) => setCalcState({...calcState, [key]: e.target.checked})}
+          {CRITERIA_DEFINITIONS.map((criterion) => (
+            <label key={criterion.key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+              <input
+                type="checkbox"
+                checked={criteriaState[criterion.key]}
+                onChange={(event) => handleToggleCriterion(criterion.key, event.target.checked)}
               />
-              {label}
+              <span>{criterion.label}</span>
             </label>
           ))}
         </div>
 
-        <Button onClick={calculateScore}>Calcular Escore</Button>
+        <Button onClick={handleCalculateScore}>Calcular Escore</Button>
 
-        {score !== null && (
-          <div style={{ marginTop: 'var(--spacing-md)', padding: 'var(--spacing-md)', backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)', borderRadius: '8px', boxShadow: 'var(--shadow-extruded-flat)' }}>
-            <h3 style={{ fontFamily: 'var(--typography-fontfamilies-mainmono)' }}>Escore: {score}</h3>
-            <p style={{ fontSize: '0.875rem', marginTop: 'var(--spacing-sm)' }}>
-              {score === 0 ? 'Risco baixo (considerar não anticoagular).' : 
-               score === 1 ? 'Risco moderado (considerar anticoagulação oral).' : 
-               'Risco alto (anticoagulação oral recomendada).'}
+        {calculatedScore !== null && (
+          <div
+            style={{
+              marginTop: 'var(--spacing-lg)',
+              padding: 'var(--spacing-md)',
+              backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+              borderRadius: '12px',
+            }}
+          >
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-semantic-accent-accentprimary)' }}>
+              Pontuação Total: {calculatedScore} {calculatedScore === 1 ? 'ponto' : 'pontos'}
+            </h3>
+            <p style={{ marginTop: 'var(--spacing-sm)', fontSize: '0.875rem' }}>
+              {getClinicalRiskRecommendation(calculatedScore)}
             </p>
           </div>
         )}
