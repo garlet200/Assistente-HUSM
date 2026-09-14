@@ -48,6 +48,11 @@
   box-shadow: var(--shadow-inset-medium);
 }
 
+.optionButton:focus-visible {
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 2px;
+}
+
 .optionButton.selected {
   color: var(--color-semantic-accent-accentprimary);
   border: 1.5px solid var(--color-semantic-accent-accentprimary);

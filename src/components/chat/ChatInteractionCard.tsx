@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { Loader2, RotateCcw } from 'lucide-react';
 import { ChatCitationList } from './ChatCitationList';
 import { ReliabilityBadge } from './ReliabilityBadge';
+import { isRetryableResponse } from '@/lib/utils/formatters';
 
 export interface Interaction {
   id: string;
@@ -51,23 +52,6 @@ function extractSuggestionsAndMainContent(rawResponseText: string): {
   };
 }
 
-/**
- * Checks whether the response text represents an error or temporary service unavailability,
- * requiring a retry button for the user.
- */
-function isRetryableResponse(text: string | null | undefined): boolean {
-  if (!text) return false;
-  return (
-    text.includes('Aviso do Sistema:') ||
-    text.includes('indisponível') ||
-    text.includes('tente novamente') ||
-    text.includes('aguarde alguns instantes') ||
-    text.includes('alta demanda') ||
-    text.includes('erro ao processar') ||
-    text.includes('Erro de rede') ||
-    text.includes('erro')
-  );
-}
 
 /**
  * Renders a single consultation interaction card containing the user's prompt at the top,
@@ -103,7 +87,6 @@ export function ChatInteractionCard({
           padding: 'var(--spacing-ml) var(--spacing-md)',
           backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
           borderRadius: '16px',
-          boxShadow: 'var(--shadow-extruded-flat)',
         }}
       >
         {/* Prompt do usuário no topo do card com horário */}
@@ -247,7 +230,7 @@ export function ChatInteractionCard({
                   }}
                 >
                   <RotateCcw size={16} />
-                  Tentar novamente em alguns instantes
+                  Tentar novamente
                 </button>
               </div>
             )}

@@ -5,25 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Plus, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
+import { formatTimestampToLocaleString } from '@/lib/utils/formatters';
 
 interface StudySessionSummary {
   id: string;
   title: string;
   updated_at: string;
-}
-
-/**
- * Formats ISO timestamps into Portuguese Brazilian short date and time.
- */
-function formatTimestampToLocaleString(dateString: string): string {
-  const dateObject = new Date(dateString);
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(dateObject);
 }
 
 export default function StudyHub() {
@@ -77,7 +64,12 @@ export default function StudyHub() {
       .select()
       .single();
 
-    if (!creationError && createdSession) {
+    if (creationError) {
+      console.error('Falha ao criar nova sessão de estudo no Supabase:', creationError);
+      return;
+    }
+
+    if (createdSession) {
       router.push(`/study/${createdSession.id}`);
     }
   };

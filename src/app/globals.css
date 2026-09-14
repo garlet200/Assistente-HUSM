@@ -73,6 +73,11 @@ a {
   text-decoration: none;
 }
 
+a:focus-visible {
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 2px;
+}
+
 /* Base Neumorphic Classes - if needed globally, mas usaremos aqui para simplificar as lógicas */
 @keyframes spin {
   from {

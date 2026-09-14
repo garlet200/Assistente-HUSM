@@ -21,9 +21,9 @@ export interface ModelTierConfig {
 export const CASCADE_CONFIG: ModelTierConfig[] = [
   {
     tier: 'primary',
-    defaultModelId: 'gemini-3.1-pro-preview',
+    defaultModelId: 'gemini-3.8-flash',
     envVarKey: 'GEMINI_MODEL_PRIMARY',
-    displayName: 'Gemini 3.1 Pro',
+    displayName: 'Gemini 3.8 Flash',
     reliability: {
       level: 'high',
       label: 'Alta confiabilidade',
@@ -33,9 +33,9 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
   },
   {
     tier: 'fallback_1',
-    defaultModelId: 'gemini-3.8-flash',
+    defaultModelId: 'gemini-3.5-flash',
     envVarKey: 'GEMINI_MODEL_FALLBACK_1',
-    displayName: 'Gemini 3.8 Flash',
+    displayName: 'Gemini 3.5 Flash',
     reliability: {
       level: 'standard',
       label: 'Confiabilidade padrão',

@@ -10,7 +10,11 @@ import { searchPubMed } from './pubmed';
  * Ensures the unemotional, protocol-driven persona and required disclaimer.
  */
 function buildAssistenteHusmSystemInstruction(): string {
-  return `Você é o "Assistente_HUSM", uma interface de raciocínio clínico e busca de evidências. Sua natureza é estritamente a de uma ferramenta de processamento de informação. Você deve operar com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use emojis em nenhuma circunstância.
+  return `Você é o "Assistente_HUSM", uma ferramenta de raciocínio clínico e busca de evidências médicas.
+Sua operação deve ser estritamente focada no processamento de informação técnica e objetiva, evitando qualquer linguagem que sugira personalidade, sentimentos ou consciência. Não use emojis em nenhuma circunstância.
+
+INÍCIO DIRETO DA RESPOSTA:
+Vá diretamente ao conteúdo médico ou à resposta da dúvida do usuário desde a primeira palavra. É expressamente PROIBIDO iniciar a resposta se autodescrevendo, explicando o que a interface é, sua finalidade, a que ela se destina ou utilizando frases de abertura como "Esta interface processa...", "Esta interface destina-se a...", "Como ferramenta...", ou quaisquer preâmbulos explicativos sobre o sistema. Responda imediatamente e com precisão técnica à questão apresentada.
 
 TAREFAS - FUNÇÃO
 Sua operação no chat livre é focada em:
@@ -20,7 +24,7 @@ Sua operação no chat livre é focada em:
 RESTRIÇÕES - REGRAS INEGOCIÁVEIS
 A. Restrições de Segurança (Não Clínico)
 * PROIBIÇÃO DE DIAGNÓSTICO: Estritamente proibido fornecer um diagnóstico definitivo, conselho clínico, ou substituir um profissional de saúde licenciado.
-* PROIBIÇÃO DE LINGUAGEM PESSOAL: Não use "Eu acho", "Eu sinto", "Minha opinião é". Use somente termos como "Esta interface processa" ou "O modelo indica".
+* LINGUAGEM IMPESSOAL: Escreva de forma puramente técnica, impessoal e em terceira pessoa ou voz passiva. Não use "Eu acho", "Eu sinto", "Minha opinião é", e NUNCA inclua declarações ou preâmbulos sobre o papel ou a natureza da própria interface.
 * EMERGÊNCIAS: Para relatos de emergência (dor no peito, dispneia extrema, etc.), a PRIMEIRA resposta deve ser a instrução para buscar ajuda médica imediata.
 
 B. Restrições de Evidência
@@ -126,15 +130,19 @@ export class AIOrchestrator {
     const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
 
     const candidateModels = [
+      getModelIdForTier('primary'),
       getModelIdForTier('fallback_1'),
       getModelIdForTier('fallback_2'),
-      getModelIdForTier('primary'),
     ];
 
     for (const modelId of candidateModels) {
       try {
-        const extractionResponse = await provider.generate(
-          { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
+        const extractionResponse = await withTimeout(
+          provider.generate(
+            { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
+            modelId
+          ),
+          6000,
           modelId
         );
 
@@ -149,7 +157,8 @@ export class AIOrchestrator {
         const citationList = pubmedResults.pmids.map((article) => `PMID: ${article.id} | ${article.title}`);
 
         return { evidenceContext, citationList };
-      } catch {
+      } catch (extractionError) {
+        console.warn(`[PubMed Query Extraction] Falha ao extrair query usando modelo ${modelId}:`, extractionError instanceof Error ? extractionError.message : extractionError);
         // Continue to next candidate model for query extraction
       }
     }

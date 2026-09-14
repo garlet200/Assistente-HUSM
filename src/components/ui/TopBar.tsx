@@ -138,7 +138,7 @@ export function TopBar() {
             <button
               type="button"
               className={styles.menuItem}
-              style={{ width: '100%', justifyContent: 'flex-start', color: '#E53E3E' }}
+              style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--color-primitive-general-error)' }}
               onClick={handleLogout}
             >
               Sair

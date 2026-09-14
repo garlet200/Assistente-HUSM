@@ -27,60 +27,74 @@ export function BottomNav() {
   ];
 
   return (
-    <nav style={{
-      display: 'flex',
-      justifyContent: 'space-around',
-      alignItems: 'center',
-      padding: 'var(--spacing-sm) var(--spacing-md)',
-      margin: '0 24px 24px 24px',
-      backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
-      boxShadow: 'var(--shadow-extruded-medium)',
-      borderRadius: '32px',
-      position: 'relative',
-      zIndex: 50,
-      gap: 'var(--spacing-sm)'
-    }}>
-      {navItems.map((item) => {
-        const isActive = pathname.startsWith(item.path);
-        return (
-          <button
-            key={item.path}
-            className={styles.menuItem}
-            onClick={() => {
-              if (item.path === '/chat') {
-                const activeChatId = sessionStorage.getItem('activeChatId');
-                if (activeChatId && !pathname.startsWith('/chat')) {
-                  router.push(`/chat/${activeChatId}`);
+    <div
+      style={{
+        width: '100%',
+        backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+        padding: 'var(--spacing-md) var(--spacing-lg)',
+        paddingBottom: 'calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px))',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        zIndex: 50,
+        flexShrink: 0,
+        boxSizing: 'border-box',
+      }}
+    >
+      <nav style={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: 'var(--spacing-sm) var(--spacing-md)',
+        backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
+        boxShadow: 'var(--shadow-extruded-medium)',
+        borderRadius: 'var(--radius-radius-larger)',
+        gap: 'var(--spacing-sm)'
+      }}>
+        {navItems.map((item) => {
+          const isActive = pathname.startsWith(item.path);
+          return (
+            <button
+              key={item.path}
+              className={styles.menuItem}
+              onClick={() => {
+                if (item.path === '/chat') {
+                  const activeChatId = sessionStorage.getItem('activeChatId');
+                  if (activeChatId && !pathname.startsWith('/chat')) {
+                    router.push(`/chat/${activeChatId}`);
+                  } else {
+                    router.push(item.path);
+                  }
+                } else if (item.path === '/study') {
+                  const activeStudyId = sessionStorage.getItem('activeStudyId');
+                  if (activeStudyId && !pathname.startsWith('/study')) {
+                    router.push(`/study/${activeStudyId}`);
+                  } else {
+                    router.push(item.path);
+                  }
                 } else {
                   router.push(item.path);
                 }
-              } else if (item.path === '/study') {
-                const activeStudyId = sessionStorage.getItem('activeStudyId');
-                if (activeStudyId && !pathname.startsWith('/study')) {
-                  router.push(`/study/${activeStudyId}`);
-                } else {
-                  router.push(item.path);
-                }
-              } else {
-                router.push(item.path);
-              }
-            }}
-            title={item.label}
-            style={{
-              flex: 1,
-              padding: 'var(--spacing-ml)',
-              fontSize: '0.875rem',
-              color: isActive ? 'var(--color-semantic-accent-accentprimary)' : 'var(--color-semantic-text-textdark)',
-              boxShadow: isActive ? 'var(--shadow-inset-medium)' : 'none',
-              borderRadius: '24px',
-              flexDirection: 'column',
-              gap: 'var(--spacing-min)'
-            }}
-          >
-            {item.icon}
-          </button>
-        );
-      })}
-    </nav>
+              }}
+              title={item.label}
+              style={{
+                flex: 1,
+                padding: 'var(--spacing-ml)',
+                fontSize: '0.875rem',
+                color: isActive ? 'var(--color-semantic-accent-accentprimary)' : 'var(--color-semantic-text-textdark)',
+                boxShadow: isActive ? 'var(--shadow-inset-medium)' : 'none',
+                borderRadius: 'var(--radius-radius-large)',
+                flexDirection: 'column',
+                gap: 'var(--spacing-min)'
+              }}
+            >
+              {item.icon}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

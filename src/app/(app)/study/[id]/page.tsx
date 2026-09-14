@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { MultipleChoiceQuestion } from '@/components/study/MultipleChoiceQuestion';
 import { createClient } from '@/lib/supabase/client';
 import { ReliabilityBadge } from '@/components/chat/ReliabilityBadge';
+import { isRetryableResponse } from '@/lib/utils/formatters';
 
 interface StudyMessage {
   id: string;
@@ -38,7 +39,8 @@ const PREDEFINED_STUDY_TOPICS = [
  * Builds system prompt for generating initial clinical case simulations with MCQs.
  */
 function buildInitialCaseSystemInstruction(): string {
-  return `Você é o "Assistente_HUSM", uma interface de raciocínio clínico. Opere com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é". Use termos como "Esta interface processa" ou "O modelo indica". Não use emojis.
+  return `Você é o "Assistente_HUSM", simulador de casos clínicos. Opere com máxima eficiência técnica, evitando qualquer linguagem que sugira personalidade, sentimentos ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é", e não use emojis.
+É terminantemente PROIBIDO iniciar a resposta se autodescrevendo ou explicando a finalidade da interface (NÃO use "Esta interface processa...", "Esta interface destina-se a...", etc.). Apresente diretamente o caso clínico desde a primeira frase.
 
 TAREFA - SIMULAÇÃO CLÍNICA
 Gerar e conduzir casos clínicos interativos complexos (anamnese, exame físico, hipóteses e manejo) para fins educacionais.
@@ -53,7 +55,8 @@ AÇÃO: Você atua como simulador. Você deve gerar um caso clínico desafiador,
  * Builds system prompt for evaluating student MCQ answers and progressing the simulated case.
  */
 function buildAnswerEvaluationSystemInstruction(): string {
-  return `Você é o "Assistente_HUSM", uma interface de raciocínio clínico. Opere com máxima eficiência e precisão, evitando qualquer linguagem que sugira personalidade, sentimentos, crenças ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é". Use termos como "Esta interface processa" ou "O modelo indica". Não use emojis.
+  return `Você é o "Assistente_HUSM", simulador de casos clínicos. Opere com máxima eficiência técnica, evitando qualquer linguagem que sugira personalidade, sentimentos ou consciência. Não use "Eu acho", "Eu sinto", "Minha opinião é", e não use emojis.
+É terminantemente PROIBIDO iniciar a resposta se autodescrevendo ou explicando a finalidade da interface (NÃO use "Esta interface processa...", "Esta interface destina-se a...", etc.). Apresente diretamente a avaliação clínica da resposta do usuário e a evolução do caso desde a primeira frase.
 
 TAREFA - SIMULAÇÃO CLÍNICA
 Gerar e conduzir casos clínicos interativos complexos (anamnese, exame físico, hipóteses e manejo) para fins educacionais.
@@ -80,22 +83,6 @@ function buildStudyConversationHistory(messagesList: StudyMessage[]): Array<{ ro
   });
 }
 
-/**
- * Checks whether the simulation message represents an error or temporary unavailability.
- */
-function isRetryableResponse(text: string | null | undefined): boolean {
-  if (!text) return false;
-  return (
-    text.includes('Aviso do Sistema:') ||
-    text.includes('indisponível') ||
-    text.includes('tente novamente') ||
-    text.includes('aguarde alguns instantes') ||
-    text.includes('alta demanda') ||
-    text.includes('erro ao processar') ||
-    text.includes('Erro de rede') ||
-    text.includes('erro')
-  );
-}
 
 export default function StudyChat({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -302,7 +289,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
         {
           id: 'err',
           role: 'model',
-          content: '⚠️ **Aviso do Sistema:** Ocorreu um erro de rede. Tente novamente.',
+          content: 'O assistente está temporariamente indisponível devido à alta demanda nos servidores de processamento. Por favor, aguarde alguns instantes e tente novamente.',
         },
       ]);
     } finally {
@@ -401,7 +388,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
         {
           id: 'err',
           role: 'model',
-          content: '⚠️ **Aviso do Sistema:** Erro ao avaliar a resposta. Tente novamente.',
+          content: 'O assistente está temporariamente indisponível devido à alta demanda nos servidores de processamento. Por favor, aguarde alguns instantes e tente novamente.',
         },
       ]);
     } finally {
@@ -430,10 +417,14 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
 
     // Clean up error state from Supabase
     if (errorNoticeMessage?.id && !errorNoticeMessage.id.includes('err')) {
-      supabase.from('messages').delete().eq('id', errorNoticeMessage.id).then();
+      Promise.resolve(
+        supabase.from('messages').delete().eq('id', errorNoticeMessage.id)
+      ).catch((err: unknown) => console.error('Erro ao remover mensagem de erro do estudo:', err));
     }
     if (precedingUserMessage?.id && !precedingUserMessage.id.includes('err')) {
-      supabase.from('messages').delete().eq('id', precedingUserMessage.id).then();
+      Promise.resolve(
+        supabase.from('messages').delete().eq('id', precedingUserMessage.id)
+      ).catch((err: unknown) => console.error('Erro ao remover mensagem do usuário do estudo:', err));
     }
 
     if (!precedingUserMessage) {
@@ -654,7 +645,6 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                         padding: 'var(--spacing-ml) var(--spacing-md)',
                         backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
                         borderRadius: '16px',
-                        boxShadow: 'var(--shadow-extruded-flat)',
                       }}
                     >
                       {/* Tema escolhido pelo usuário — no topo */}
@@ -729,7 +719,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                                 }}
                               >
                                 <RotateCcw size={16} />
-                                Tentar novamente em alguns instantes
+                                Tentar novamente
                               </button>
                             </div>
                           )}
@@ -755,7 +745,6 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
                       padding: 'var(--spacing-ml) var(--spacing-md)',
                       backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
                       borderRadius: '16px',
-                      boxShadow: 'var(--shadow-extruded-flat)',
                     }}
                   >
                     {/* Tema escolhido pelo usuário — no topo */}

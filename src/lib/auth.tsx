@@ -81,10 +81,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       const updatedUser = { ...user, hasCompletedOnboarding: true };
       setUser(updatedUser);
-      // Update metadata in Supabase
-      await supabase.auth.updateUser({
-        data: { hasCompletedOnboarding: true }
-      });
+      try {
+        const { error } = await supabase.auth.updateUser({
+          data: { hasCompletedOnboarding: true }
+        });
+        if (error) {
+          console.error('Erro ao atualizar status de onboarding no Supabase:', error.message);
+        }
+      } catch (err) {
+        console.error('Falha inesperada ao atualizar onboarding:', err);
+      }
     }
   };
 

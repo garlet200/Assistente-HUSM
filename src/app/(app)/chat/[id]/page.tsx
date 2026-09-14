@@ -6,19 +6,7 @@ import { Edit, Loader2, ArrowDown, Send } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { Input } from '@/components/ui/Input';
 import { createClient } from '@/lib/supabase/client';
-import { ChatInteractionCard } from '@/components/chat/ChatInteractionCard';
-
-export interface Interaction {
-  id: string;
-  userMessageId?: string;
-  modelMessageId?: string;
-  prompt: string;
-  response: string | null;
-  timestamp: Date;
-  citations?: string[];
-  reliability?: 'high' | 'standard' | 'reduced';
-  modelTier?: 'primary' | 'fallback_1' | 'fallback_2';
-}
+import { ChatInteractionCard, Interaction } from '@/components/chat/ChatInteractionCard';
 
 interface GatewayHistoryEntry {
   role: string;
@@ -208,10 +196,14 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
 
     // Clean up failed records in database
     if (interactionToRetry.userMessageId) {
-      supabase.from('messages').delete().eq('id', interactionToRetry.userMessageId).then();
+      Promise.resolve(
+        supabase.from('messages').delete().eq('id', interactionToRetry.userMessageId)
+      ).catch((err: unknown) => console.error('Erro ao deletar mensagem de usuário para retry:', err));
     }
     if (interactionToRetry.modelMessageId) {
-      supabase.from('messages').delete().eq('id', interactionToRetry.modelMessageId).then();
+      Promise.resolve(
+        supabase.from('messages').delete().eq('id', interactionToRetry.modelMessageId)
+      ).catch((err: unknown) => console.error('Erro ao deletar mensagem do modelo para retry:', err));
     }
 
     // Re-send the prompt
@@ -367,7 +359,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
           return {
             ...item,
             response:
-              '⚠️ **Aviso do Sistema:** Ocorreu um erro ao processar sua solicitação. Tente novamente.',
+              'O assistente está temporariamente indisponível devido à alta demanda nos servidores de processamento. Por favor, aguarde alguns instantes e tente novamente.',
           };
         })
       );
@@ -505,6 +497,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
         {shouldShowScrollButton && (
           <button
             type="button"
+            className="neu-button"
             onClick={() => {
               endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
               setShouldShowScrollButton(false);
@@ -563,8 +556,6 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: isSendButtonDisabled ? 'not-allowed' : 'pointer',
-              opacity: isSendButtonDisabled ? 0.6 : 1,
               color: 'var(--color-semantic-text-textdark)',
             }}
             title="Enviar mensagem"

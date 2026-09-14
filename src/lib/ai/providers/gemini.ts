@@ -39,7 +39,7 @@ export class GeminiProvider implements AIProvider {
           text: result.response.text(),
           providerId: this.id,
           modelId: modelId,
-          citations: ['Protocolo IAM HUSM 2024'] // Mocked RAG citation for demonstration
+          citations: []
         };
       } else {
         // Single prompt mode

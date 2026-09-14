@@ -5,25 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Plus, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
+import { formatTimestampToLocaleString } from '@/lib/utils/formatters';
 
 interface ChatSessionSummary {
   id: string;
   title: string;
   updated_at: string;
-}
-
-/**
- * Formats ISO timestamps into Portuguese Brazilian short date format.
- */
-function formatTimestampToLocaleString(dateString: string): string {
-  const dateObject = new Date(dateString);
-
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(dateObject);
 }
 
 export default function ChatHub() {
