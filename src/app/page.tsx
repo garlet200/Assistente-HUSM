@@ -12,7 +12,7 @@ export default function Home() {
   const router = useRouter();
   const { user, loading, completeOnboarding } = useAuth();
   const supabase = createClient();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -39,13 +39,13 @@ export default function Home() {
         <h1 style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)' }}>Diretrizes Éticas do HUSM</h1>
         <Card variant="out">
           <p style={{ marginBottom: 'var(--spacing-md)', lineHeight: '1.6' }}>
-            Bem-vindo, {user.name}. O MedHUSM é um assistente de raciocínio clínico. 
+            Bem-vindo, {user.name}. O MedHUSM é um assistente de raciocínio clínico.
             <strong> Lembre-se:</strong> a inteligência artificial aprimora, mas nunca substitui o julgamento médico.
           </p>
           <ul style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-lg)' }}>
             <li>Não insira dados identificáveis (nomes, CPFs) de pacientes reais.</li>
             <li>Todas as respostas geradas devem ser verificadas usando o RAG ou literatura oficial.</li>
-            <li>O sistema monitora casos para fins educacionais e de auditoria.</li>
+            <li>O sistema monitora casos para fins educacionais.</li>
           </ul>
         </Card>
         <Button variant="primary" onClick={() => {
@@ -64,7 +64,7 @@ export default function Home() {
   const handleAuth = async () => {
     setAuthLoading(true);
     setAuthError('');
-    
+
     if (isSignUp) {
       if (!name) {
         setAuthError('Preencha seu nome.');
@@ -91,7 +91,7 @@ export default function Home() {
       });
       if (error) setAuthError('Email ou senha inválidos.');
     }
-    
+
     setAuthLoading(false);
   };
 
@@ -106,22 +106,22 @@ export default function Home() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
           {isSignUp && (
             <>
-              <Input 
-                label="Seu Nome" 
+              <Input
+                label="Seu Nome"
                 placeholder="Dr. Silva / Estudante João"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
               <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)', marginBottom: 'var(--spacing-sm)' }}>
-                <Button 
-                  variant={role === 'student' ? 'primary' : 'default'} 
+                <Button
+                  variant={role === 'student' ? 'primary' : 'default'}
                   onClick={() => setRole('student')}
                   style={{ flex: 1 }}
                 >
                   Estudante
                 </Button>
-                <Button 
-                  variant={role === 'doctor' ? 'primary' : 'default'} 
+                <Button
+                  variant={role === 'doctor' ? 'primary' : 'default'}
                   onClick={() => setRole('doctor')}
                   style={{ flex: 1 }}
                 >
@@ -130,17 +130,17 @@ export default function Home() {
               </div>
             </>
           )}
-          
-          <Input 
-            label="Email" 
+
+          <Input
+            label="Email"
             placeholder="seu@email.com"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <Input 
-            label="Senha" 
+          <Input
+            label="Senha"
             placeholder="******"
             type="password"
             value={password}
@@ -153,8 +153,8 @@ export default function Home() {
             </p>
           )}
 
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             style={{ marginTop: 'var(--spacing-md)' }}
             onClick={handleAuth}
             disabled={!email || !password || authLoading}
