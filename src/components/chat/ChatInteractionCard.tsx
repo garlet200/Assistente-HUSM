@@ -17,6 +17,7 @@ export interface Interaction {
   citations?: string[];
   reliability?: 'high' | 'standard' | 'reduced';
   modelTier?: 'primary' | 'fallback_1' | 'fallback_2';
+  modelDisplayName?: string;
 }
 
 interface ChatInteractionCardProps {
@@ -147,6 +148,7 @@ export function ChatInteractionCard({
               <ReliabilityBadge
                 reliability={interaction.reliability}
                 modelTier={interaction.modelTier}
+                modelDisplayName={interaction.modelDisplayName}
               />
             </div>
 

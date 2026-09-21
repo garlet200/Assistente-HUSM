@@ -1,5 +1,5 @@
 import { AIRequest, AIResponse, AIProvider } from './types';
-import { CASCADE_CONFIG, getModelIdForTier, getCascadeTimeoutMs } from './cascade.config';
+import { CASCADE_CONFIG, getModelIdForTier } from './cascade.config';
 import { logFallbackEvent, FallbackLogEntry } from './analytics';
 import { deIdentify } from './privacyGate';
 import { GeminiProvider } from './providers/gemini';
@@ -129,9 +129,8 @@ export class AIOrchestrator {
   ): Promise<{ evidenceContext: string; citationList: string[] }> {
     const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
 
-    // Prioritize fast, low-latency models for keyword extraction to avoid blocking
+    // Prioritize fastest model (fallback_1: gemini-3.5-flash-lite) with a tight 4s timeout
     const candidateModels = [
-      getModelIdForTier('fallback_2'),
       getModelIdForTier('fallback_1'),
     ];
 
@@ -142,7 +141,7 @@ export class AIOrchestrator {
             { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
             modelId
           ),
-          12000,
+          4000,
           modelId
         );
 
@@ -203,13 +202,17 @@ export class AIOrchestrator {
     };
 
     // 4. Cascade Execution across the 3 configured tiers
-    const timeoutMs = getCascadeTimeoutMs();
+    const globalTimeoutOverride =
+      process.env.AI_CASCADE_TIMEOUT_MS && !isNaN(Number(process.env.AI_CASCADE_TIMEOUT_MS))
+        ? Number(process.env.AI_CASCADE_TIMEOUT_MS)
+        : null;
     const fallbackEvents: FallbackLogEntry[] = [];
 
     for (let i = 0; i < CASCADE_CONFIG.length; i++) {
       const currentTierConfig = CASCADE_CONFIG[i];
       const modelId = getModelIdForTier(currentTierConfig.tier);
       const nextTierConfig = i < CASCADE_CONFIG.length - 1 ? CASCADE_CONFIG[i + 1] : null;
+      const timeoutMs = globalTimeoutOverride ?? currentTierConfig.timeoutMs;
 
       const attemptStartTime = Date.now();
 

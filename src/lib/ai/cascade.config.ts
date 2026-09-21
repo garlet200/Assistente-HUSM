@@ -29,31 +29,31 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Alta confiabilidade',
       badgeVisible: false, // Rule: never show badge if primary model generated the response
     },
-    timeoutMs: 45000, // 45 seconds to allow full clinical generation
+    timeoutMs: 40000, // 40s to allow full deep clinical reasoning
   },
   {
     tier: 'fallback_1',
-    defaultModelId: 'gemini-3.5-flash',
+    defaultModelId: 'gemini-3.5-flash-lite',
     envVarKey: 'GEMINI_MODEL_FALLBACK_1',
-    displayName: 'Gemini 3.5 Flash',
+    displayName: 'Gemini 3.5 Flash-Lite',
     reliability: {
       level: 'standard',
       label: 'Confiabilidade padrão',
       badgeVisible: true,
     },
-    timeoutMs: 45000,
+    timeoutMs: 25000, // 25s for fast fallback with 500 RPD
   },
   {
     tier: 'fallback_2',
-    defaultModelId: 'gemini-3.5-flash-lite',
+    defaultModelId: 'gemini-3.1-flash-lite',
     envVarKey: 'GEMINI_MODEL_FALLBACK_2',
-    displayName: 'Gemini 3.5 Flash-Lite',
+    displayName: 'Gemini 3.1 Flash-Lite',
     reliability: {
       level: 'reduced',
       label: 'Confiabilidade reduzida',
       badgeVisible: true,
     },
-    timeoutMs: 45000,
+    timeoutMs: 25000, // 25s for safety net fallback with 500 RPD
   },
 ];
 

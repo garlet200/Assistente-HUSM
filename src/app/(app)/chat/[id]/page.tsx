@@ -63,6 +63,7 @@ function groupMessagesIntoInteractions(
       currentInteractionGroup.modelMessageId = message.id;
       currentInteractionGroup.reliability = message.metadata?.reliability;
       currentInteractionGroup.modelTier = message.metadata?.modelTier;
+      currentInteractionGroup.modelDisplayName = message.metadata?.displayName;
     }
   }
 
@@ -340,6 +341,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
             modelMessageId: persistedModelMessage?.id,
             reliability: gatewayResult.reliability,
             modelTier: gatewayResult.modelTier,
+            modelDisplayName: gatewayResult.displayName,
           };
         })
       );

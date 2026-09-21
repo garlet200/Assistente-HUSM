@@ -263,12 +263,12 @@ export function AppInfoModal({ isOpen, onClose }: AppInfoModalProps) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-min)' }}>
                   <span style={{ fontWeight: 'var(--typography-fontweights-semibold)', fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)' }}>
-                    Fallback 1: Gemini 3.5 Flash
+                    Fallback 1: Gemini 3.5 Flash-Lite
                   </span>
                   <ReliabilityBadge reliability="standard" modelTier="fallback_1" />
                 </div>
                 <p style={{ margin: 0, fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)' }}>
-                  Acionado caso o modelo principal sofra lentidão (&gt; 45s) ou indisponibilidade temporária.
+                  Acionado caso o modelo principal sofra lentidão (&gt; 40s) ou indisponibilidade temporária. Alta disponibilidade com resposta ágil.
                 </p>
               </div>
 
@@ -282,12 +282,12 @@ export function AppInfoModal({ isOpen, onClose }: AppInfoModalProps) {
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-min)' }}>
                   <span style={{ fontWeight: 'var(--typography-fontweights-semibold)', fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)' }}>
-                    Fallback 2: Gemini 3.5 Flash-Lite
+                    Fallback 2: Gemini 3.1 Flash-Lite
                   </span>
                   <ReliabilityBadge reliability="reduced" modelTier="fallback_2" />
                 </div>
                 <p style={{ margin: 0, fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)' }}>
-                  Contingência rápida em casos de alta demanda global ou picos de tráfego.
+                  Rede de segurança adicional para períodos de pico ou alta demanda global.
                 </p>
               </div>
             </div>
