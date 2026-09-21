@@ -129,10 +129,10 @@ export class AIOrchestrator {
   ): Promise<{ evidenceContext: string; citationList: string[] }> {
     const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
 
+    // Prioritize fast, low-latency models for keyword extraction to avoid blocking
     const candidateModels = [
-      getModelIdForTier('primary'),
-      getModelIdForTier('fallback_1'),
       getModelIdForTier('fallback_2'),
+      getModelIdForTier('fallback_1'),
     ];
 
     for (const modelId of candidateModels) {
@@ -142,7 +142,7 @@ export class AIOrchestrator {
             { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
             modelId
           ),
-          6000,
+          12000,
           modelId
         );
 

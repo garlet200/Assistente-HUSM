@@ -29,7 +29,7 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Alta confiabilidade',
       badgeVisible: false, // Rule: never show badge if primary model generated the response
     },
-    timeoutMs: 15000, // 15 seconds
+    timeoutMs: 45000, // 45 seconds to allow full clinical generation
   },
   {
     tier: 'fallback_1',
@@ -41,7 +41,7 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Confiabilidade padrão',
       badgeVisible: true,
     },
-    timeoutMs: 15000,
+    timeoutMs: 45000,
   },
   {
     tier: 'fallback_2',
@@ -53,7 +53,7 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Confiabilidade reduzida',
       badgeVisible: true,
     },
-    timeoutMs: 15000,
+    timeoutMs: 45000,
   },
 ];
 
@@ -73,11 +73,12 @@ export function getModelIdForTier(tier: ModelTier): string {
 
 /**
  * Resolves the effective timeout in milliseconds per cascade attempt.
+ * Defaults to 45000ms (45 seconds) to ensure thorough medical reasoning is completed.
  */
 export function getCascadeTimeoutMs(): number {
   const envTimeout = process.env.AI_CASCADE_TIMEOUT_MS;
   if (envTimeout && !isNaN(Number(envTimeout))) {
     return Number(envTimeout);
   }
-  return 15000;
+  return 45000;
 }

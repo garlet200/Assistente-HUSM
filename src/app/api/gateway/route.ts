@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { AIRequest } from '@/lib/ai/types';
 import { orchestrator } from '@/lib/ai/router';
 
+// Allow up to 60 seconds execution time on Vercel Serverless Functions for LLM reasoning
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   try {
     const body: AIRequest = await request.json();

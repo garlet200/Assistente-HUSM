@@ -268,7 +268,7 @@ export function AppInfoModal({ isOpen, onClose }: AppInfoModalProps) {
                   <ReliabilityBadge reliability="standard" modelTier="fallback_1" />
                 </div>
                 <p style={{ margin: 0, fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)' }}>
-                  Acionado caso o modelo principal sofra lentidão (&gt; 15s) ou indisponibilidade temporária.
+                  Acionado caso o modelo principal sofra lentidão (&gt; 45s) ou indisponibilidade temporária.
                 </p>
               </div>
 
