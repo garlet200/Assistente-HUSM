@@ -34,7 +34,7 @@ export function ReliabilityBadge({
   }
 
   const tierLabel = isFallback1 ? 'Fallback 1' : 'Fallback 2';
-  const defaultModelName = isFallback1 ? 'Gemini 3.5 Flash-Lite' : 'Gemini 3.1 Flash-Lite';
+  const defaultModelName = isFallback1 ? 'Gemini 3.5 Flash-Lite' : 'Gemini 3 Flash Preview';
   const resolvedModelName = modelDisplayName || defaultModelName;
 
   const tooltipText = isFallback1

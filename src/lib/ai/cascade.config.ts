@@ -29,7 +29,7 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Alta confiabilidade',
       badgeVisible: false, // Rule: never show badge if primary model generated the response
     },
-    timeoutMs: 40000, // 40s to allow full deep clinical reasoning
+    timeoutMs: 50000, // 50s to allow full deep clinical reasoning
   },
   {
     tier: 'fallback_1',
@@ -41,19 +41,19 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
       label: 'Confiabilidade padrão',
       badgeVisible: true,
     },
-    timeoutMs: 25000, // 25s for fast fallback with 500 RPD
+    timeoutMs: 50000, // 50s to ensure deep clinical reasoning is not prematurely interrupted under load
   },
   {
     tier: 'fallback_2',
-    defaultModelId: 'gemini-3.1-flash-lite',
+    defaultModelId: 'gemini-3-flash-preview',
     envVarKey: 'GEMINI_MODEL_FALLBACK_2',
-    displayName: 'Gemini 3.1 Flash-Lite',
+    displayName: 'Gemini 3 Flash Preview',
     reliability: {
       level: 'reduced',
       label: 'Confiabilidade reduzida',
       badgeVisible: true,
     },
-    timeoutMs: 25000, // 25s for safety net fallback with 500 RPD
+    timeoutMs: 50000, // 50s safety net timeout
   },
 ];
 
@@ -73,12 +73,12 @@ export function getModelIdForTier(tier: ModelTier): string {
 
 /**
  * Resolves the effective timeout in milliseconds per cascade attempt.
- * Defaults to 45000ms (45 seconds) to ensure thorough medical reasoning is completed.
+ * Defaults to 50000ms (50 seconds) to ensure thorough medical reasoning is completed.
  */
 export function getCascadeTimeoutMs(): number {
   const envTimeout = process.env.AI_CASCADE_TIMEOUT_MS;
   if (envTimeout && !isNaN(Number(envTimeout))) {
     return Number(envTimeout);
   }
-  return 45000;
+  return 50000;
 }

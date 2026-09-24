@@ -129,9 +129,11 @@ export class AIOrchestrator {
   ): Promise<{ evidenceContext: string; citationList: string[] }> {
     const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
 
-    // Prioritize fastest model (fallback_1: gemini-3.5-flash-lite) with a tight 4s timeout
+    // Prioritize fast, high-quota models (fallback_1: gemini-3.5-flash-lite, fallback_2: gemini-3-flash-preview)
+    // with 8s timeout to ensure high-quality English translation even under network fluctuations.
     const candidateModels = [
       getModelIdForTier('fallback_1'),
+      getModelIdForTier('fallback_2'),
     ];
 
     for (const modelId of candidateModels) {
@@ -141,7 +143,7 @@ export class AIOrchestrator {
             { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
             modelId
           ),
-          4000,
+          8000,
           modelId
         );
 
@@ -207,6 +209,7 @@ export class AIOrchestrator {
         ? Number(process.env.AI_CASCADE_TIMEOUT_MS)
         : null;
     const fallbackEvents: FallbackLogEntry[] = [];
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     for (let i = 0; i < CASCADE_CONFIG.length; i++) {
       const currentTierConfig = CASCADE_CONFIG[i];
@@ -214,51 +217,73 @@ export class AIOrchestrator {
       const nextTierConfig = i < CASCADE_CONFIG.length - 1 ? CASCADE_CONFIG[i + 1] : null;
       const timeoutMs = globalTimeoutOverride ?? currentTierConfig.timeoutMs;
 
-      const attemptStartTime = Date.now();
+      const maxTierAttempts = 2; // Allows 1 retry if transient 503 server overload occurs
 
-      try {
-        const response = await withTimeout(
-          provider.generate(safeRequest, modelId),
-          timeoutMs,
-          currentTierConfig.displayName
-        );
+      for (let attempt = 1; attempt <= maxTierAttempts; attempt++) {
+        const attemptStartTime = Date.now();
 
-        if (pmidCitations.length > 0) {
-          response.citations = [...(response.citations || []), ...pmidCitations];
-        }
+        try {
+          const response = await withTimeout(
+            provider.generate(safeRequest, modelId),
+            timeoutMs,
+            currentTierConfig.displayName
+          );
 
-        // Attach reliability tier metadata
-        response.reliability = currentTierConfig.reliability.level;
-        response.modelTier = currentTierConfig.tier;
-        response.displayName = currentTierConfig.displayName;
-        response.modelId = modelId;
+          if (pmidCitations.length > 0) {
+            response.citations = [...(response.citations || []), ...pmidCitations];
+          }
 
-        if (fallbackEvents.length > 0) {
-          response.fallbackEvents = fallbackEvents;
-        }
+          // Attach reliability tier metadata
+          response.reliability = currentTierConfig.reliability.level;
+          response.modelTier = currentTierConfig.tier;
+          response.displayName = currentTierConfig.displayName;
+          response.modelId = modelId;
 
-        return response;
-      } catch (tierError: unknown) {
-        const durationMs = Date.now() - attemptStartTime;
-        const failureReason = classifyFailureReason(tierError, durationMs, timeoutMs);
+          if (fallbackEvents.length > 0) {
+            response.fallbackEvents = fallbackEvents;
+          }
 
-        const logEntry: FallbackLogEntry = {
-          timestamp: new Date().toISOString(),
-          role: request.role,
-          attemptedTier: currentTierConfig.tier,
-          attemptedModelId: modelId,
-          failureReason,
-          durationMs,
-          nextTier: nextTierConfig ? nextTierConfig.tier : 'none',
-          nextModelId: nextTierConfig ? getModelIdForTier(nextTierConfig.tier) : 'none',
-        };
+          return response;
+        } catch (tierError: unknown) {
+          const durationMs = Date.now() - attemptStartTime;
+          const failureReason = classifyFailureReason(tierError, durationMs, timeoutMs);
+          const is503Overload = failureReason === 'SERVER_OVERLOAD_OR_5XX';
 
-        fallbackEvents.push(logEntry);
-        logFallbackEvent(logEntry);
+          // Intelligent 503 backoff: if Google returns 503 overload, wait 1000ms and retry once on this tier
+          if (is503Overload && attempt < maxTierAttempts) {
+            console.warn(
+              `[AI_503_BACKOFF] Modelo "${currentTierConfig.displayName}" retornou 503 em ${durationMs}ms. Aplicando pausa de 1000ms antes de retentar...`
+            );
+            await delay(1000);
+            continue;
+          }
 
-        // Continue to the next tier in the cascade
-        if (nextTierConfig) {
-          continue;
+          // Tier failed (after retry or immediately if 429 quota / timeout)
+          const logEntry: FallbackLogEntry = {
+            timestamp: new Date().toISOString(),
+            role: request.role,
+            attemptedTier: currentTierConfig.tier,
+            attemptedModelId: modelId,
+            failureReason,
+            durationMs,
+            nextTier: nextTierConfig ? nextTierConfig.tier : 'none',
+            nextModelId: nextTierConfig ? getModelIdForTier(nextTierConfig.tier) : 'none',
+          };
+
+          fallbackEvents.push(logEntry);
+          logFallbackEvent(logEntry);
+
+          // If failure was due to 503 overload, pause 1000ms before triggering the next tier
+          // to allow Google's cluster to recover from the transient spike
+          if (is503Overload && nextTierConfig) {
+            console.info(
+              `[AI_503_BACKOFF] Pausa de 1000ms antes de acionar o próximo tier "${nextTierConfig.tier}"...`
+            );
+            await delay(1000);
+          }
+
+          // Stop retrying this tier and continue to the next tier in the cascade
+          break;
         }
       }
     }
