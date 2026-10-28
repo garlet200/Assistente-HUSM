@@ -1,14 +1,28 @@
-import { ModelTier, ReliabilityLevel } from './cascade.config';
+/**
+ * @file types.ts
+ * @description Contratos e interfaces TypeScript centrais do subsistema de Inteligência Artificial
+ * (requisições, respostas, papéis de modelo, histórico e provedores).
+ */
+
+import { ModelTier, ReliabilityLevel } from './cascadeConfig';
 import { FallbackLogEntry } from './analytics';
 
 export type PrivacyLevel = 'high' | 'medium' | 'low';
-export type ModelRole = 'MODEL_ROLE_CLINICAL_REASONING' | 'MODEL_ROLE_RAG_SYNTHESIS' | 'MODEL_ROLE_EDUCATIONAL';
+export type ModelRole =
+  | 'MODEL_ROLE_CLINICAL_REASONING'
+  | 'MODEL_ROLE_RAG_SYNTHESIS'
+  | 'MODEL_ROLE_EDUCATIONAL';
+
+export interface AIRequestHistoryMessage {
+  role: 'user' | 'model';
+  content: string;
+}
 
 export interface AIRequest {
   prompt: string;
   role: ModelRole;
   systemInstruction?: string;
-  history?: Array<{ role: 'user' | 'model'; content: string }>;
+  history?: AIRequestHistoryMessage[];
   responseFormat?: 'text' | 'json';
 }
 
@@ -29,12 +43,4 @@ export interface AIProvider {
   generate(request: AIRequest, modelId: string): Promise<AIResponse>;
   supportsTools: boolean;
   privacyLevel: PrivacyLevel;
-}
-
-export interface ModelDefinition {
-  id: string;
-  provider: string; // matches AIProvider id
-  privacyLevel: PrivacyLevel;
-  cost: number; // 0 for free
-  supportedRoles: ModelRole[];
 }

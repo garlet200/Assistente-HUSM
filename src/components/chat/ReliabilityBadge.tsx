@@ -1,11 +1,18 @@
 'use client';
 
+/**
+ * @file ReliabilityBadge.tsx
+ * @description Selo visual de transparência exibido exclusivamente quando a resposta da IA
+ * é gerada por um modelo de contingência (Fallback 1 ou Fallback 2).
+ */
+
 import React from 'react';
 import { Info } from 'lucide-react';
+import { ModelTier, ReliabilityLevel } from '@/lib/ai/cascadeConfig';
 
 export interface ReliabilityBadgeProps {
-  reliability?: 'high' | 'standard' | 'reduced';
-  modelTier?: 'primary' | 'fallback_1' | 'fallback_2';
+  reliability?: ReliabilityLevel;
+  modelTier?: ModelTier;
   modelDisplayName?: string;
   style?: React.CSSProperties;
 }

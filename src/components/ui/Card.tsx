@@ -1,3 +1,9 @@
+/**
+ * @file Card.tsx
+ * @description Contêiner de superfície neumórfica com suporte a elevação externa ('out')
+ * ou baixo-relevo ('in').
+ */
+
 import React, { HTMLAttributes } from 'react';
 import styles from './ui.module.css';
 

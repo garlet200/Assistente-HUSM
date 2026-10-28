@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * @file page.tsx
+ * @description Calculadora clínica determinística do escore CHA₂DS₂-VASc (/tools/cha2ds2-vasc)
+ * para estratificação de risco tromboembólico em fibrilação atrial (execução 100% local, Zero-LLM).
+ */
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -97,14 +103,22 @@ export default function Cha2ds2VascCalculator() {
   };
 
   return (
-    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
+    <div
+      style={{
+        padding: 'var(--spacing-lg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacing-lg)',
+        height: '100%',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
         <button
           type="button"
           className="neu-button"
           onClick={() => router.push('/tools')}
           style={{
-            borderRadius: '50%',
+            borderRadius: 'var(--radius-radius-full)',
             width: '40px',
             height: '40px',
             display: 'flex',
@@ -113,21 +127,57 @@ export default function Cha2ds2VascCalculator() {
             color: 'var(--color-semantic-text-textdark)',
           }}
           title="Voltar para ferramentas"
+          aria-label="Voltar para ferramentas"
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Voltar</h1>
+        <h1
+          style={{
+            fontSize: 'var(--typography-fontsizes-subtitle)',
+            fontWeight: 'var(--typography-fontweights-semibold)',
+          }}
+        >
+          Voltar
+        </h1>
       </div>
 
       <Card variant="out">
-        <h2 style={{ marginBottom: 'var(--spacing-md)', fontSize: '1.25rem' }}>Calculadora CHA₂DS₂-VASc (Zero-LLM)</h2>
-        <p style={{ fontSize: '0.875rem', color: 'var(--color-semantic-text-textlight)', marginBottom: 'var(--spacing-md)' }}>
+        <h2
+          style={{
+            marginBottom: 'var(--spacing-md)',
+            fontSize: 'var(--typography-fontsizes-subtitle)',
+          }}
+        >
+          Calculadora CHA₂DS₂-VASc (Zero-LLM)
+        </h2>
+        <p
+          style={{
+            fontSize: '0.875rem',
+            color: 'var(--color-semantic-text-textlight)',
+            marginBottom: 'var(--spacing-md)',
+          }}
+        >
           Execução 100% local no dispositivo. A IA não é necessária para cálculos determinísticos.
         </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-sm)',
+            marginBottom: 'var(--spacing-md)',
+          }}
+        >
           {CRITERIA_DEFINITIONS.map((criterion) => (
-            <label key={criterion.key} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+            <label
+              key={criterion.key}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                cursor: 'pointer',
+              }}
+            >
               <input
                 type="checkbox"
                 checked={criteriaState[criterion.key]}
@@ -146,10 +196,16 @@ export default function Cha2ds2VascCalculator() {
               marginTop: 'var(--spacing-lg)',
               padding: 'var(--spacing-md)',
               backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
-              borderRadius: '12px',
+              borderRadius: 'var(--radius-radius-small)',
             }}
           >
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--color-semantic-accent-accentprimary)' }}>
+            <h3
+              style={{
+                fontSize: '1.1rem',
+                fontWeight: 'var(--typography-fontweights-semibold)',
+                color: 'var(--color-semantic-accent-accentprimary)',
+              }}
+            >
               Pontuação Total: {calculatedScore} {calculatedScore === 1 ? 'ponto' : 'pontos'}
             </h3>
             <p style={{ marginTop: 'var(--spacing-sm)', fontSize: '0.875rem' }}>

@@ -1,113 +1,61 @@
+/**
+ * @file router.ts
+ * @description Orquestrador central de IA (AIOrchestrator) que coordena anonimização LGPD (Privacy Gate),
+ * enriquecimento de evidências científicas (PubMed RAG) e execução resiliente em cascata de 3 níveis.
+ */
+
 import { AIRequest, AIResponse, AIProvider } from './types';
-import { CASCADE_CONFIG, getModelIdForTier } from './cascade.config';
-import { logFallbackEvent, FallbackLogEntry } from './analytics';
+import {
+  CASCADE_CONFIG,
+  ModelTierConfig,
+  getModelIdForTier,
+  resolveCascadeTimeoutOverrideMs,
+} from './cascadeConfig';
+import {
+  classifyFailureReason,
+  createAllModelsFailedResponse,
+  FallbackLogEntry,
+  logFallbackEvent,
+} from './analytics';
 import { deIdentify } from './privacyGate';
 import { GeminiProvider } from './providers/gemini';
 import { searchPubMed } from './pubmed';
+import {
+  buildAssistenteHusmSystemInstruction,
+  buildPubMedExtractionPrompt,
+} from './prompts';
 
-/**
- * Builds the official Assistente_HUSM system instructions for clinical reasoning.
- * Ensures the unemotional, protocol-driven persona and required disclaimer.
- */
-function buildAssistenteHusmSystemInstruction(): string {
-  return `Você é o "Assistente_HUSM", uma ferramenta de raciocínio clínico e busca de evidências médicas.
-Sua operação deve ser estritamente focada no processamento de informação técnica e objetiva, evitando qualquer linguagem que sugira personalidade, sentimentos ou consciência. Não use emojis em nenhuma circunstância.
+const PUBMED_EXTRACTION_TIMEOUT_MS = 8000;
+const OVERLOAD_BACKOFF_DELAY_MS = 1000;
+const MAX_ATTEMPTS_PER_TIER = 2;
 
-INÍCIO DIRETO DA RESPOSTA:
-Vá diretamente ao conteúdo médico ou à resposta da dúvida do usuário desde a primeira palavra. É expressamente PROIBIDO iniciar a resposta se autodescrevendo, explicando o que a interface é, sua finalidade, a que ela se destina ou utilizando frases de abertura como "Esta interface processa...", "Esta interface destina-se a...", "Como ferramenta...", ou quaisquer preâmbulos explicativos sobre o sistema. Responda imediatamente e com precisão técnica à questão apresentada.
-
-TAREFAS - FUNÇÃO
-Sua operação no chat livre é focada em:
-1. REFERÊNCIA CONSOLIDADA: Fornecer informações minuciosas, abrangentes e diferenciais, baseadas estritamente nas fontes listadas. Não cite ou liste referências numéricas, IDs ou PMIDs no corpo do texto (as fontes serão listadas automaticamente na seção RAG).
-2. SUGESTÃO DE PESQUISA: Após a resposta principal, sugira 2 a 3 tópicos de pesquisa aprofundada ou palavras-chave. IMPORTANTE: Formate CADA sugestão EXATAMENTE como um link no formato markdown apontando para "#sugestao-TEXTO", substituindo espaços no link por "%20", por exemplo: [Hipertensão na gravidez](#sugestao-Hipertensão%20na%20gravidez). Não use marcadores de lista, apenas os links.
-
-RESTRIÇÕES - REGRAS INEGOCIÁVEIS
-A. Restrições de Segurança (Não Clínico)
-* PROIBIÇÃO DE DIAGNÓSTICO: Estritamente proibido fornecer um diagnóstico definitivo, conselho clínico, ou substituir um profissional de saúde licenciado.
-* LINGUAGEM IMPESSOAL: Escreva de forma puramente técnica, impessoal e em terceira pessoa ou voz passiva. Não use "Eu acho", "Eu sinto", "Minha opinião é", e NUNCA inclua declarações ou preâmbulos sobre o papel ou a natureza da própria interface.
-* EMERGÊNCIAS: Para relatos de emergência (dor no peito, dispneia extrema, etc.), a PRIMEIRA resposta deve ser a instrução para buscar ajuda médica imediata.
-
-B. Restrições de Evidência
-* Todas as informações DEVEM ser baseadas e rastreáveis.
-* Fontes Aceitas: PubMed, Semantic Scholar, OpenAlex, SciELO, MedSul, MSD Manuals, Harrison: Medicina Interna.
-
-FORMATO - CRITÉRIOS DE SUCESSO
-1. Linguagem: Use terminologia médica precisa, vocabulário vasto e estruturas frasais variadas. Evite uso excessivo de formatação Markdown (use negrito apenas para o estritamente necessário).
-2. Verificação: A resposta deve ser minuciosamente detalhada, incorporando detalhes fisiopatológicos, epidemiológicos e farmacológicos sempre que relevante.
-3. Aviso Obrigatório (Disclaimer): Toda resposta DEVE ser finalizada exatamente com o seguinte texto:
-"AVISO: Esta é uma ferramenta educacional e não substitui o julgamento ou o cuidado de um profissional de saúde licenciado."`;
+function delay(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 /**
  * Executes an asynchronous promise with a strict timeout limit.
- * If the promise does not resolve within timeoutMs, rejects with a timeout error.
  */
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, modelDisplayName: string): Promise<T> {
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  modelDisplayName: string
+): Promise<T> {
   let timerId: NodeJS.Timeout;
 
   const timeoutPromise = new Promise<never>((_, reject) => {
     timerId = setTimeout(() => {
-      reject(new Error(`TIMEOUT_EXCEEDED: Tempo limite de ${timeoutMs / 1000}s excedido no modelo ${modelDisplayName}`));
+      reject(
+        new Error(
+          `TIMEOUT_EXCEEDED: Tempo limite de ${timeoutMs / 1000}s excedido no modelo ${modelDisplayName}`
+        )
+      );
     }, timeoutMs);
   });
 
   return Promise.race([promise, timeoutPromise]).finally(() => {
     clearTimeout(timerId);
   });
-}
-
-/**
- * Categorizes failure causes for diagnostics and analytics logging.
- */
-function classifyFailureReason(error: unknown, durationMs: number, timeoutMs: number): string {
-  if (durationMs >= timeoutMs || (error instanceof Error && error.message.includes('TIMEOUT_EXCEEDED'))) {
-    return 'TIMEOUT_EXCEEDED';
-  }
-
-  if (!(error instanceof Error) || !error.message) {
-    return 'UNKNOWN_API_ERROR';
-  }
-
-  const msg = error.message;
-  if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota')) {
-    return 'QUOTA_OR_RATE_LIMIT_EXCEEDED';
-  }
-
-  if (
-    msg.includes('500') ||
-    msg.includes('502') ||
-    msg.includes('503') ||
-    msg.includes('504') ||
-    msg.includes('demand') ||
-    msg.includes('overloaded')
-  ) {
-    return 'SERVER_OVERLOAD_OR_5XX';
-  }
-
-  if (msg.includes('400') || msg.includes('401') || msg.includes('403') || msg.includes('404')) {
-    return 'CLIENT_OR_AUTH_4XX';
-  }
-
-  return `API_ERROR: ${msg.substring(0, 80)}`;
-}
-
-/**
- * User-facing clear error response when all 3 cascade models fail.
- * Strictly non-technical, polite, informing temporary unavailability.
- */
-function createAllModelsFailedResponse(isJsonFormat: boolean, fallbackEvents: FallbackLogEntry[]): AIResponse {
-  const userFacingExplanation =
-    'O assistente está temporariamente indisponível devido à alta demanda nos servidores de processamento. Por favor, aguarde alguns instantes e tente novamente.';
-
-  return {
-    text: isJsonFormat
-      ? JSON.stringify({ content: userFacingExplanation, isMCQ: false, options: [] })
-      : userFacingExplanation,
-    providerId: 'system',
-    modelId: 'cascade-exhausted',
-    citations: [],
-    fallbackEvents,
-  };
 }
 
 export class AIOrchestrator {
@@ -121,16 +69,13 @@ export class AIOrchestrator {
 
   /**
    * Translates a clinical query into PubMed boolean search syntax and fetches relevant abstracts.
-   * Employs fast models first to protect primary quotas and ensure high-speed retrieval.
+   * Uses high-quota fallback tiers first to protect primary model quota.
    */
   private async retrievePubMedContext(
     sanitizedPrompt: string,
     provider: AIProvider
   ): Promise<{ evidenceContext: string; citationList: string[] }> {
-    const extractionPrompt = `Extraia os principais conceitos clínicos da seguinte pergunta e os traduza para o inglês, formando uma query booleana curta para o PubMed (ex: Myocardial Infarction AND Treatment). Retorne APENAS a string da query, sem aspas ou explicações. Pergunta: "${sanitizedPrompt}"`;
-
-    // Prioritize fast, high-quota models (fallback_1: gemini-3.5-flash-lite, fallback_2: gemini-3-flash-preview)
-    // with 8s timeout to ensure high-quality English translation even under network fluctuations.
+    const extractionPrompt = buildPubMedExtractionPrompt(sanitizedPrompt);
     const candidateModels = [
       getModelIdForTier('fallback_1'),
       getModelIdForTier('fallback_2'),
@@ -143,7 +88,7 @@ export class AIOrchestrator {
             { prompt: extractionPrompt, role: 'MODEL_ROLE_CLINICAL_REASONING' },
             modelId
           ),
-          8000,
+          PUBMED_EXTRACTION_TIMEOUT_MS,
           modelId
         );
 
@@ -155,12 +100,18 @@ export class AIOrchestrator {
         }
 
         const evidenceContext = `\n\nCONTEXTO DE EVIDÊNCIAS OBTIDAS DO PUBMED (Use estritamente estas informações se aplicável):\n${pubmedResults.context}`;
-        const citationList = pubmedResults.pmids.map((article) => `PMID: ${article.id} | ${article.title}`);
+        const citationList = pubmedResults.pmids.map(
+          (article) => `PMID: ${article.id} | ${article.title}`
+        );
 
         return { evidenceContext, citationList };
       } catch (extractionError) {
-        console.warn(`[PubMed Query Extraction] Falha ao extrair query usando modelo ${modelId}:`, extractionError instanceof Error ? extractionError.message : extractionError);
-        // Continue to next candidate model for query extraction
+        const errorDetail =
+          extractionError instanceof Error ? extractionError.message : extractionError;
+        console.warn(
+          `[PubMed Query Extraction] Falha ao extrair query usando modelo ${modelId}:`,
+          errorDetail
+        );
       }
     }
 
@@ -168,12 +119,98 @@ export class AIOrchestrator {
   }
 
   /**
+   * Executes up to MAX_ATTEMPTS_PER_TIER attempts for a single cascade tier, applying 503 backoff.
+   */
+  private async executeSingleTierAttempts(params: {
+    provider: AIProvider;
+    safeRequest: AIRequest;
+    currentTierConfig: ModelTierConfig;
+    nextTierConfig: ModelTierConfig | null;
+    timeoutMs: number;
+    pmidCitations: string[];
+    fallbackEvents: FallbackLogEntry[];
+  }): Promise<AIResponse | null> {
+    const {
+      provider,
+      safeRequest,
+      currentTierConfig,
+      nextTierConfig,
+      timeoutMs,
+      pmidCitations,
+      fallbackEvents,
+    } = params;
+    const modelId = getModelIdForTier(currentTierConfig.tier);
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_TIER; attempt++) {
+      const attemptStartTime = Date.now();
+
+      try {
+        const response = await withTimeout(
+          provider.generate(safeRequest, modelId),
+          timeoutMs,
+          currentTierConfig.displayName
+        );
+
+        if (pmidCitations.length > 0) {
+          response.citations = [...(response.citations || []), ...pmidCitations];
+        }
+
+        response.reliability = currentTierConfig.reliability.level;
+        response.modelTier = currentTierConfig.tier;
+        response.displayName = currentTierConfig.displayName;
+        response.modelId = modelId;
+
+        if (fallbackEvents.length > 0) {
+          response.fallbackEvents = fallbackEvents;
+        }
+
+        return response;
+      } catch (tierError: unknown) {
+        const durationMs = Date.now() - attemptStartTime;
+        const failureReason = classifyFailureReason(tierError, durationMs, timeoutMs);
+        const is503Overload = failureReason === 'SERVER_OVERLOAD_OR_5XX';
+
+        if (is503Overload && attempt < MAX_ATTEMPTS_PER_TIER) {
+          console.warn(
+            `[AI_503_BACKOFF] Modelo "${currentTierConfig.displayName}" retornou 503 em ${durationMs}ms. Aplicando pausa de ${OVERLOAD_BACKOFF_DELAY_MS}ms antes de retentar...`
+          );
+          await delay(OVERLOAD_BACKOFF_DELAY_MS);
+          continue;
+        }
+
+        const logEntry: FallbackLogEntry = {
+          timestamp: new Date().toISOString(),
+          role: safeRequest.role,
+          attemptedTier: currentTierConfig.tier,
+          attemptedModelId: modelId,
+          failureReason,
+          durationMs,
+          nextTier: nextTierConfig ? nextTierConfig.tier : 'none',
+          nextModelId: nextTierConfig ? getModelIdForTier(nextTierConfig.tier) : 'none',
+        };
+
+        fallbackEvents.push(logEntry);
+        logFallbackEvent(logEntry);
+
+        if (is503Overload && nextTierConfig) {
+          console.info(
+            `[AI_503_BACKOFF] Pausa de ${OVERLOAD_BACKOFF_DELAY_MS}ms antes de acionar o próximo tier "${nextTierConfig.tier}"...`
+          );
+          await delay(OVERLOAD_BACKOFF_DELAY_MS);
+        }
+
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Main request processing entrypoint with privacy gating, RAG, and 3-tier cascade fallback.
    */
   async processRequest(request: AIRequest): Promise<AIResponse> {
     const isJsonFormat = request.responseFormat === 'json';
-
-    // 1. Privacy Gating
     const sanitizedPrompt = deIdentify(request.prompt);
 
     const provider = this.providers.get('gemini');
@@ -182,12 +219,10 @@ export class AIOrchestrator {
       return createAllModelsFailedResponse(isJsonFormat, []);
     }
 
-    // 2. Evidence Augmentation (RAG)
     let pubmedContext = '';
     let pmidCitations: string[] = [];
 
-    const isClinicalReasoningRole = request.role === 'MODEL_ROLE_CLINICAL_REASONING';
-    if (isClinicalReasoningRole) {
+    if (request.role === 'MODEL_ROLE_CLINICAL_REASONING') {
       const { evidenceContext, citationList } = await this.retrievePubMedContext(
         sanitizedPrompt,
         provider
@@ -196,99 +231,36 @@ export class AIOrchestrator {
       pmidCitations = citationList;
     }
 
-    // 3. Safe Request Composition
     const safeRequest: AIRequest = {
       ...request,
       prompt: sanitizedPrompt + pubmedContext,
       systemInstruction: request.systemInstruction || buildAssistenteHusmSystemInstruction(),
     };
 
-    // 4. Cascade Execution across the 3 configured tiers
-    const globalTimeoutOverride =
-      process.env.AI_CASCADE_TIMEOUT_MS && !isNaN(Number(process.env.AI_CASCADE_TIMEOUT_MS))
-        ? Number(process.env.AI_CASCADE_TIMEOUT_MS)
-        : null;
+    const globalTimeoutOverride = resolveCascadeTimeoutOverrideMs();
     const fallbackEvents: FallbackLogEntry[] = [];
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    for (let i = 0; i < CASCADE_CONFIG.length; i++) {
-      const currentTierConfig = CASCADE_CONFIG[i];
-      const modelId = getModelIdForTier(currentTierConfig.tier);
-      const nextTierConfig = i < CASCADE_CONFIG.length - 1 ? CASCADE_CONFIG[i + 1] : null;
+    for (let tierIndex = 0; tierIndex < CASCADE_CONFIG.length; tierIndex++) {
+      const currentTierConfig = CASCADE_CONFIG[tierIndex];
+      const nextTierConfig =
+        tierIndex < CASCADE_CONFIG.length - 1 ? CASCADE_CONFIG[tierIndex + 1] : null;
       const timeoutMs = globalTimeoutOverride ?? currentTierConfig.timeoutMs;
 
-      const maxTierAttempts = 2; // Allows 1 retry if transient 503 server overload occurs
+      const tierResponse = await this.executeSingleTierAttempts({
+        provider,
+        safeRequest,
+        currentTierConfig,
+        nextTierConfig,
+        timeoutMs,
+        pmidCitations,
+        fallbackEvents,
+      });
 
-      for (let attempt = 1; attempt <= maxTierAttempts; attempt++) {
-        const attemptStartTime = Date.now();
-
-        try {
-          const response = await withTimeout(
-            provider.generate(safeRequest, modelId),
-            timeoutMs,
-            currentTierConfig.displayName
-          );
-
-          if (pmidCitations.length > 0) {
-            response.citations = [...(response.citations || []), ...pmidCitations];
-          }
-
-          // Attach reliability tier metadata
-          response.reliability = currentTierConfig.reliability.level;
-          response.modelTier = currentTierConfig.tier;
-          response.displayName = currentTierConfig.displayName;
-          response.modelId = modelId;
-
-          if (fallbackEvents.length > 0) {
-            response.fallbackEvents = fallbackEvents;
-          }
-
-          return response;
-        } catch (tierError: unknown) {
-          const durationMs = Date.now() - attemptStartTime;
-          const failureReason = classifyFailureReason(tierError, durationMs, timeoutMs);
-          const is503Overload = failureReason === 'SERVER_OVERLOAD_OR_5XX';
-
-          // Intelligent 503 backoff: if Google returns 503 overload, wait 1000ms and retry once on this tier
-          if (is503Overload && attempt < maxTierAttempts) {
-            console.warn(
-              `[AI_503_BACKOFF] Modelo "${currentTierConfig.displayName}" retornou 503 em ${durationMs}ms. Aplicando pausa de 1000ms antes de retentar...`
-            );
-            await delay(1000);
-            continue;
-          }
-
-          // Tier failed (after retry or immediately if 429 quota / timeout)
-          const logEntry: FallbackLogEntry = {
-            timestamp: new Date().toISOString(),
-            role: request.role,
-            attemptedTier: currentTierConfig.tier,
-            attemptedModelId: modelId,
-            failureReason,
-            durationMs,
-            nextTier: nextTierConfig ? nextTierConfig.tier : 'none',
-            nextModelId: nextTierConfig ? getModelIdForTier(nextTierConfig.tier) : 'none',
-          };
-
-          fallbackEvents.push(logEntry);
-          logFallbackEvent(logEntry);
-
-          // If failure was due to 503 overload, pause 1000ms before triggering the next tier
-          // to allow Google's cluster to recover from the transient spike
-          if (is503Overload && nextTierConfig) {
-            console.info(
-              `[AI_503_BACKOFF] Pausa de 1000ms antes de acionar o próximo tier "${nextTierConfig.tier}"...`
-            );
-            await delay(1000);
-          }
-
-          // Stop retrying this tier and continue to the next tier in the cascade
-          break;
-        }
+      if (tierResponse) {
+        return tierResponse;
       }
     }
 
-    // 5. If all 3 models failed
     return createAllModelsFailedResponse(isJsonFormat, fallbackEvents);
   }
 }

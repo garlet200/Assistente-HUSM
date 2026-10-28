@@ -1,3 +1,9 @@
+/**
+ * @file pubmed.ts
+ * @description Cliente de integração RAG com a API NCBI E-Utilities (PubMed) para busca de
+ * ensaios clínicos/revisões (esearch) e extração de títulos e resumos em XML (efetch).
+ */
+
 export interface PubMedArticleReference {
   id: string;
   title: string;
@@ -75,7 +81,7 @@ function extractArticlesFromXmlPayload(rawXmlPayload: string): {
 
     if (abstractMatches && abstractMatches.length > 0) {
       abstractContent = abstractMatches
-        .map((tag) => tag.replace(/<[^>]+>/g, '').trim())
+        .map((abstractXmlSegment) => abstractXmlSegment.replace(/<[^>]+>/g, '').trim())
         .join(' ');
     }
 

@@ -1,7 +1,13 @@
+/**
+ * @file layout.tsx
+ * @description Root Layout global do Next.js (App Router) responsável por carregar as fontes
+ * IBM Plex (Sans, Serif, Mono), metadados PWA, telemetria Clarity e provedores de autenticação.
+ */
+
 import type { Metadata } from "next";
 import Script from "next/script";
 import { IBM_Plex_Sans, IBM_Plex_Serif, IBM_Plex_Mono } from "next/font/google";
-import { Providers } from "@/components/Providers";
+import { Providers } from "@/components/layout/Providers";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({

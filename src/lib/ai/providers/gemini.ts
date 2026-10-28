@@ -1,3 +1,9 @@
+/**
+ * @file gemini.ts
+ * @description Adaptador do provedor Google Gemini (@google/generative-ai) responsável por
+ * instanciar o modelo, injetar System Instructions e gerenciar sessões multi-turn ou single-turn.
+ */
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AIProvider, AIRequest, AIResponse } from '../types';
 
@@ -19,40 +25,42 @@ export class GeminiProvider implements AIProvider {
       generationConfig.responseMimeType = 'application/json';
     }
 
-    const model = this.genAI.getGenerativeModel({ 
+    const model = this.genAI.getGenerativeModel({
       model: modelId,
       systemInstruction: request.systemInstruction,
-      generationConfig
+      generationConfig,
     });
 
     try {
-      if (request.history && request.history.length > 0) {
-        // Chat mode
-        const chat = model.startChat({
-          history: request.history.map(msg => ({
-            role: msg.role === 'model' ? 'model' : 'user',
-            parts: [{ text: msg.content }]
+      const hasConversationHistory = Boolean(request.history && request.history.length > 0);
+
+      if (hasConversationHistory && request.history) {
+        const chatSession = model.startChat({
+          history: request.history.map((historyMessage) => ({
+            role: historyMessage.role === 'model' ? 'model' : 'user',
+            parts: [{ text: historyMessage.content }],
           })),
         });
-        const result = await chat.sendMessage(request.prompt);
+
+        const chatResult = await chatSession.sendMessage(request.prompt);
         return {
-          text: result.response.text(),
+          text: chatResult.response.text(),
           providerId: this.id,
-          modelId: modelId,
-          citations: []
-        };
-      } else {
-        // Single prompt mode
-        const result = await model.generateContent(request.prompt);
-        return {
-          text: result.response.text(),
-          providerId: this.id,
-          modelId: modelId,
+          modelId,
+          citations: [],
         };
       }
+
+      const singlePromptResult = await model.generateContent(request.prompt);
+      return {
+        text: singlePromptResult.response.text(),
+        providerId: this.id,
+        modelId,
+      };
     } catch (error: unknown) {
       console.error('Gemini Provider Error:', error);
-      throw new Error(`Failed to generate content: ${(error as Error).message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to generate content: ${errorMessage}`);
     }
   }
 }

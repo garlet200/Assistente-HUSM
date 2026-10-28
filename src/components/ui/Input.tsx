@@ -1,3 +1,9 @@
+/**
+ * @file Input.tsx
+ * @description Campo de entrada de texto neumórfico em baixo-relevo, com suporte a rótulo
+ * acessível e formato arredondado ('pill') para a barra de chat.
+ */
+
 import React, { InputHTMLAttributes } from 'react';
 import styles from './ui.module.css';
 

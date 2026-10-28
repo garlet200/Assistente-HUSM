@@ -73,7 +73,9 @@ a {
   text-decoration: none;
 }
 
-a:focus-visible {
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
   outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
   outline-offset: 2px;
 }
@@ -142,7 +144,7 @@ a:focus-visible {
 }
 
 .chat-footer {
-  padding: 16px 24px;
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: transparent;
   position: relative;
   z-index: 11;
@@ -150,7 +152,7 @@ a:focus-visible {
 
 @media (max-width: 768px) {
   .chat-footer {
-    padding: 16px var(--spacing-md); /* Consistent spacing with the margins of the main content */
+    padding: var(--spacing-md);
   }
 }
 

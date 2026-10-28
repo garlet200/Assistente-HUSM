@@ -1,3 +1,9 @@
+/**
+ * @file cascadeConfig.ts
+ * @description Configuração da cascata de resiliência em 3 níveis (Primary, Fallback 1 e Fallback 2)
+ * para chamadas aos modelos Google Gemini, incluindo timeouts e metadados de confiabilidade.
+ */
+
 export type ModelTier = 'primary' | 'fallback_1' | 'fallback_2';
 export type ReliabilityLevel = 'high' | 'standard' | 'reduced';
 
@@ -62,7 +68,7 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
  * allowing environment variable overrides while falling back to the configured default.
  */
 export function getModelIdForTier(tier: ModelTier): string {
-  const tierConfig = CASCADE_CONFIG.find((c) => c.tier === tier);
+  const tierConfig = CASCADE_CONFIG.find((tierCandidate) => tierCandidate.tier === tier);
   if (!tierConfig) {
     return 'gemini-3.8-flash';
   }
@@ -72,13 +78,13 @@ export function getModelIdForTier(tier: ModelTier): string {
 }
 
 /**
- * Resolves the effective timeout in milliseconds per cascade attempt.
- * Defaults to 50000ms (50 seconds) to ensure thorough medical reasoning is completed.
+ * Resolves an optional environment timeout override in milliseconds per cascade attempt.
+ * Returns null when not configured so each tier uses its configured timeoutMs.
  */
-export function getCascadeTimeoutMs(): number {
+export function resolveCascadeTimeoutOverrideMs(): number | null {
   const envTimeout = process.env.AI_CASCADE_TIMEOUT_MS;
   if (envTimeout && !isNaN(Number(envTimeout))) {
     return Number(envTimeout);
   }
-  return 50000;
+  return null;
 }

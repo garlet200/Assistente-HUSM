@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * @file page.tsx
+ * @description Menu de Ferramentas Médicas (/tools) que dá acesso aos módulos de cálculo
+ * clínico determinístico (Zero-LLM).
+ */
+
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
@@ -24,21 +30,41 @@ export default function ToolsMenu() {
   };
 
   return (
-    <div style={{ padding: 'var(--spacing-lg)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)', height: '100%' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 'var(--spacing-sm)' }}>
+    <div
+      style={{
+        padding: 'var(--spacing-lg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacing-lg)',
+        height: '100%',
+      }}
+    >
+      <h1
+        style={{
+          fontSize: 'var(--typography-fontsizes-subheading)',
+          fontWeight: 'var(--typography-fontweights-semibold)',
+          marginBottom: 'var(--spacing-sm)',
+        }}
+      >
         Ferramentas Médicas
       </h1>
       <p style={{ color: 'var(--color-semantic-text-textlight)' }}>
         Módulos práticos de cálculo determinístico (Zero-LLM).
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--spacing-md)' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gap: 'var(--spacing-md)',
+        }}
+      >
         <button
           type="button"
           className="neu-button"
           onClick={handleNavigateToCalculator}
           style={{
-            borderRadius: '16px',
+            borderRadius: 'var(--radius-radius-medium)',
             padding: 'var(--spacing-lg) var(--spacing-md)',
             display: 'flex',
             flexDirection: 'column',
@@ -53,7 +79,7 @@ export default function ToolsMenu() {
             style={{
               width: '48px',
               height: '48px',
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-radius-full)',
               boxShadow: 'var(--shadow-extruded-flat)',
               display: 'flex',
               alignItems: 'center',

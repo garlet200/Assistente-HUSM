@@ -1,6 +1,11 @@
 'use client';
 
-import React from 'react';
+/**
+ * @file ChatCitationList.tsx
+ * @description Renderizador de citações científicas (RAG) que converte strings "PMID: id | título"
+ * em links externos verificáveis para o portal NCBI PubMed.
+ */
+
 import { ExternalLink } from 'lucide-react';
 
 interface ChatCitationListProps {
@@ -65,11 +70,11 @@ export function ChatCitationList({ citations }: ChatCitationListProps) {
   }
 
   return (
-    <div style={{ marginTop: 'var(--spacing-md)', paddingTop: '12px' }}>
+    <div style={{ marginTop: 'var(--spacing-md)', paddingTop: 'var(--spacing-ml)' }}>
       <p
         style={{
-          fontSize: '0.75rem',
-          fontWeight: 'bold',
+          fontSize: 'var(--typography-fontsizes-caption)',
+          fontWeight: 'var(--typography-fontweights-bold)',
           marginBottom: 'var(--spacing-sm)',
           color: 'var(--color-semantic-text-textlight)',
         }}
@@ -87,11 +92,12 @@ export function ChatCitationList({ citations }: ChatCitationListProps) {
                 key={citationIndex}
                 style={{
                   fontFamily: 'var(--typography-fontfamilies-mainmono)',
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--typography-fontsizes-caption)',
                   backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                   padding: 'var(--spacing-min) var(--spacing-sm)',
-                  borderRadius: '4px',
-                  border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                  borderRadius: 'var(--radius-radius-smallest)',
+                  border:
+                    'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
                   color: 'var(--color-semantic-text-textdark)',
                 }}
               >
@@ -109,16 +115,17 @@ export function ChatCitationList({ citations }: ChatCitationListProps) {
               title={citation.fullTitle}
               style={{
                 fontFamily: 'var(--typography-fontfamilies-mainmono)',
-                fontSize: '0.75rem',
+                fontSize: 'var(--typography-fontsizes-caption)',
                 backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
                 padding: 'var(--spacing-min) var(--spacing-sm)',
-                borderRadius: '4px',
-                border: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+                borderRadius: 'var(--radius-radius-smallest)',
+                border:
+                  'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
                 textDecoration: 'none',
                 color: 'var(--color-semantic-accent-accentprimary)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: 'var(--spacing-min)',
                 cursor: 'pointer',
               }}
             >

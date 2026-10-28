@@ -1,3 +1,9 @@
+/**
+ * @file Button.tsx
+ * @description Componente atômico de botão neumórfico (variantes 'default' e 'primary')
+ * construído sobre os tokens visuais do Design System.
+ */
+
 import React, { ButtonHTMLAttributes } from 'react';
 import styles from './ui.module.css';
 

@@ -1,5 +1,12 @@
 'use client';
-import React, { useState } from 'react';
+
+/**
+ * @file MultipleChoiceQuestion.tsx
+ * @description Componente interativo de questão de múltipla escolha (MCQ) utilizado na
+ * progressão de casos clínicos simulados do Modo Estudo.
+ */
+
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from './MultipleChoiceQuestion.module.css';
 
@@ -12,7 +19,6 @@ interface MultipleChoiceQuestionProps {
 
 /**
  * Interactive Multiple Choice Question (MCQ) component used during clinical case simulations in Study mode.
- * Styled with decreased neumorphic depth for options and high-readability serif typography for questions.
  */
 export function MultipleChoiceQuestion({
   question,
@@ -29,12 +35,10 @@ export function MultipleChoiceQuestion({
 
   return (
     <div className={styles.container}>
-      {/* Question / Clinical Case content styled with Plex Serif matching chat bubbles */}
       <div className={styles.questionContent}>
         <ReactMarkdown>{question}</ReactMarkdown>
       </div>
 
-      {/* Multiple-choice option cards with decreased neumorphic elevation */}
       <div className={styles.optionsList}>
         {options.map((optionText, optionIndex) => {
           const isSelected = userSelectedOption === optionText;
@@ -55,5 +59,3 @@ export function MultipleChoiceQuestion({
     </div>
   );
 }
-
-export default MultipleChoiceQuestion;

@@ -1,12 +1,92 @@
 'use client';
 
+/**
+ * @file TopBar.tsx
+ * @description Cabeçalho superior da aplicação autenticada contendo navegação de retorno,
+ * identidade visual MedHUSM, gatilho do modal informativo/ético e menu de perfil/logout.
+ */
+
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, User, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { Card } from './Card';
+import { Card } from '@/components/ui/Card';
 import { AppInfoModal } from '@/components/common/AppInfoModal';
-import styles from './ui.module.css';
+import styles from '@/components/ui/ui.module.css';
+
+interface UserProfileDropdownProps {
+  userName: string;
+  userRoleBadgeLabel: string;
+  onCloseMenu: () => void;
+  onLogout: () => void;
+}
+
+function UserProfileDropdown({
+  userName,
+  userRoleBadgeLabel,
+  onCloseMenu,
+  onLogout,
+}: UserProfileDropdownProps) {
+  return (
+    <Card
+      variant="out"
+      style={{
+        position: 'absolute',
+        top: '56px',
+        right: '0',
+        padding: 'var(--spacing-ml)',
+        width: '200px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacing-sm)',
+        zIndex: 100,
+      }}
+    >
+      <div
+        style={{
+          padding: '0 var(--spacing-sm) var(--spacing-sm) var(--spacing-sm)',
+          borderBottom:
+            'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+          marginBottom: 'var(--spacing-min)',
+        }}
+      >
+        <p style={{ fontWeight: 'var(--typography-fontweights-semibold)', fontSize: '0.9rem' }}>
+          {userName}
+        </p>
+        <p
+          style={{
+            fontSize: 'var(--typography-fontsizes-caption)',
+            color: 'var(--color-semantic-text-textlight)',
+          }}
+        >
+          {userRoleBadgeLabel}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        className={styles.menuItem}
+        style={{ width: '100%', justifyContent: 'flex-start' }}
+        onClick={onCloseMenu}
+      >
+        Minha Conta
+      </button>
+
+      <button
+        type="button"
+        className={styles.menuItem}
+        style={{
+          width: '100%',
+          justifyContent: 'flex-start',
+          color: 'var(--color-primitive-general-error)',
+        }}
+        onClick={onLogout}
+      >
+        Sair
+      </button>
+    </Card>
+  );
+}
 
 export function TopBar() {
   const router = useRouter();
@@ -15,18 +95,17 @@ export function TopBar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
+  if (!user) {
+    return null;
+  }
+
+  const handleLogout = async (): Promise<void> => {
+    await logout();
     router.push('/');
   };
 
   const isRootTabRoute =
     pathname === '/chat' || pathname === '/study' || pathname === '/tools' || pathname === '/';
-
-  if (!user) {
-    return null;
-  }
-
   const userRoleBadgeLabel = user.role === 'doctor' ? 'Profissional' : 'Estudante';
 
   return (
@@ -42,8 +121,14 @@ export function TopBar() {
           zIndex: 50,
         }}
       >
-        {/* Back button visible only in nested pages - balanced to 88px */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '88px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            minWidth: '88px',
+          }}
+        >
           {!isRootTabRoute ? (
             <button
               type="button"
@@ -51,7 +136,7 @@ export function TopBar() {
               onClick={() => router.back()}
               style={{
                 border: 'none',
-                borderRadius: '50%',
+                borderRadius: 'var(--radius-radius-full)',
                 width: '40px',
                 height: '40px',
                 cursor: 'pointer',
@@ -61,6 +146,7 @@ export function TopBar() {
                 color: 'var(--color-semantic-text-textdark)',
               }}
               title="Voltar"
+              aria-label="Voltar"
             >
               <ArrowLeft size={20} />
             </button>
@@ -69,12 +155,11 @@ export function TopBar() {
           )}
         </div>
 
-        {/* Brand Header */}
         <div
           style={{
-            fontWeight: 600,
+            fontWeight: 'var(--typography-fontweights-semibold)',
             color: 'var(--color-semantic-text-textdark)',
-            fontSize: '1.5rem',
+            fontSize: 'var(--typography-fontsizes-subheading)',
             fontFamily: 'var(--typography-fontfamilies-mainmono)',
             fontStyle: 'italic',
             textAlign: 'center',
@@ -84,7 +169,6 @@ export function TopBar() {
           MedHUSM
         </div>
 
-        {/* Right Actions: Info Button & User Profile Menu */}
         <div
           style={{
             display: 'flex',
@@ -94,7 +178,6 @@ export function TopBar() {
             minWidth: '88px',
           }}
         >
-          {/* Info Button */}
           <button
             type="button"
             className="neu-button"
@@ -114,7 +197,6 @@ export function TopBar() {
             <Info size={20} />
           </button>
 
-          {/* User Profile / Menu Trigger */}
           <div style={{ position: 'relative' }}>
             <button
               type="button"
@@ -136,57 +218,17 @@ export function TopBar() {
             </button>
 
             {isUserMenuOpen && (
-              <Card
-                variant="out"
-                style={{
-                  position: 'absolute',
-                  top: '56px',
-                  right: '0',
-                  padding: 'var(--spacing-ml)',
-                  width: '200px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 'var(--spacing-sm)',
-                  zIndex: 100,
-                }}
-              >
-                <div
-                  style={{
-                    padding: '0 8px 8px 8px',
-                    borderBottom: '1px solid var(--color-semantic-boxshadow-boxshadowfxdark)',
-                    marginBottom: 'var(--spacing-min)',
-                  }}
-                >
-                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user.name}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-semantic-text-textlight)' }}>
-                    {userRoleBadgeLabel}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  style={{ width: '100%', justifyContent: 'flex-start' }}
-                  onClick={() => setIsUserMenuOpen(false)}
-                >
-                  Minha Conta
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.menuItem}
-                  style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--color-primitive-general-error)' }}
-                  onClick={handleLogout}
-                >
-                  Sair
-                </button>
-              </Card>
+              <UserProfileDropdown
+                userName={user.name}
+                userRoleBadgeLabel={userRoleBadgeLabel}
+                onCloseMenu={() => setIsUserMenuOpen(false)}
+                onLogout={handleLogout}
+              />
             )}
           </div>
         </div>
       </header>
 
-      {/* Info & Ethical Guidelines Modal */}
       <AppInfoModal isOpen={isInfoModalOpen} onClose={() => setIsInfoModalOpen(false)} />
     </>
   );

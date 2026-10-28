@@ -1,27 +1,30 @@
+/**
+ * @file route.ts
+ * @description Endpoint HTTP POST (/api/gateway) que atua como ponto de entrada único para todas
+ * as interações de IA, validando o contrato AIRequest e delegando ao AIOrchestrator.
+ */
+
 import { NextResponse } from 'next/server';
-import { AIRequest } from '@/lib/ai/types';
+import { AIRequest, AIResponse } from '@/lib/ai/types';
 import { orchestrator } from '@/lib/ai/router';
 
-// Allow up to 60 seconds execution time on Vercel Serverless Functions for LLM reasoning
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
-    const body: AIRequest = await request.json();
-    
-    if (!body.prompt || !body.role) {
+    const clinicalAiRequest: AIRequest = await request.json();
+
+    if (!clinicalAiRequest.prompt || !clinicalAiRequest.role) {
       return NextResponse.json({ error: 'Missing prompt or role' }, { status: 400 });
     }
 
-    const response = await orchestrator.processRequest(body);
-    
-    return NextResponse.json(response);
+    const clinicalAiResponse: AIResponse = await orchestrator.processRequest(clinicalAiRequest);
+
+    return NextResponse.json(clinicalAiResponse);
   } catch (error: unknown) {
     console.error('Gateway Error:', error);
-    return NextResponse.json(
-      { error: (error as Error).message || 'Internal Server Error' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: errorMessage || 'Internal Server Error' }, { status: 500 });
   }
 }

@@ -1,6 +1,12 @@
+/**
+ * @file layout.tsx
+ * @description Layout da área autenticada (Route Group `(app)`), compondo o shell mobile-first
+ * com TopBar fixa no topo, área principal rolável e BottomNav na base.
+ */
+
 import React from 'react';
-import { TopBar } from '@/components/ui/TopBar';
-import { BottomNav } from '@/components/ui/BottomNav';
+import { TopBar } from '@/components/layout/TopBar';
+import { BottomNav } from '@/components/layout/BottomNav';
 
 export default function AppLayout({
   children,
