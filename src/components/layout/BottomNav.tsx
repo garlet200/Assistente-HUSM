@@ -2,8 +2,8 @@
 
 /**
  * @file BottomNav.tsx
- * @description Barra de navegação inferior (Clínico, Estudos e Ferramentas) com retomada
- * inteligente de sessões ativas armazenadas em sessionStorage.
+ * @description Barra de navegação inferior mobile (Clínico, Estudos e Ferramentas) com retomada
+ * inteligente de sessões ativas armazenadas em sessionStorage. Oculta no Desktop (>= 1024px).
  */
 
 import React from 'react';
@@ -11,46 +11,48 @@ import { usePathname, useRouter } from 'next/navigation';
 import { MessageSquare, BookOpen, Grid } from 'lucide-react';
 import { SESSION_STORAGE_KEYS } from '@/lib/constants/session';
 import styles from '@/components/ui/ui.module.css';
+import shellStyles from './DesktopWorkspaceShell.module.css';
 
-interface NavigationTabItem {
+export interface NavigationTabItem {
   path: string;
   label: string;
   icon: React.ReactNode;
   activeSessionStorageKey?: string;
 }
 
-const NAVIGATION_TAB_ITEMS: readonly NavigationTabItem[] = [
+export const NAVIGATION_TAB_ITEMS: readonly NavigationTabItem[] = [
   {
     path: '/chat',
     label: 'Clínico',
-    icon: <MessageSquare size={24} />,
+    icon: <MessageSquare size={22} />,
     activeSessionStorageKey: SESSION_STORAGE_KEYS.ACTIVE_CHAT_ID,
   },
   {
     path: '/study',
     label: 'Estudos',
-    icon: <BookOpen size={24} />,
+    icon: <BookOpen size={22} />,
     activeSessionStorageKey: SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID,
   },
   {
     path: '/tools',
     label: 'Ferramentas',
-    icon: <Grid size={24} />,
+    icon: <Grid size={22} />,
   },
 ];
 
 /**
- * Resolves the target route for a bottom navigation tab.
- * If the user is switching into a tab with a previously active session, resumes that session;
- * if already inside that tab's section, navigates back to its root hub.
+ * Resolves the target route for a navigation tab.
+ * Resumes an active session when switching tabs, or navigates to the tab root if already inside it.
  */
-function resolveTabDestinationPath(tabItem: NavigationTabItem, currentPathname: string): string {
+export function resolveTabDestinationPath(
+  tabItem: NavigationTabItem,
+  currentPathname: string
+): string {
   if (!tabItem.activeSessionStorageKey) {
     return tabItem.path;
   }
 
-  const isAlreadyInTabSection = currentPathname.startsWith(tabItem.path);
-  if (isAlreadyInTabSection) {
+  if (currentPathname.startsWith(tabItem.path)) {
     return tabItem.path;
   }
 
@@ -66,19 +68,18 @@ export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handleTabClick = (tabItem: NavigationTabItem) => {
-    const destinationPath = resolveTabDestinationPath(tabItem, pathname);
-    router.push(destinationPath);
+  const handleTabClick = (tabItem: NavigationTabItem): void => {
+    router.push(resolveTabDestinationPath(tabItem, pathname));
   };
 
   return (
     <div
+      className={shellStyles.mobileOnly}
       style={{
         width: '100%',
         backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
         padding: 'var(--spacing-md) var(--spacing-lg)',
         paddingBottom: 'calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px))',
-        display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
@@ -110,6 +111,7 @@ export function BottomNav() {
               className={styles.menuItem}
               onClick={() => handleTabClick(tabItem)}
               title={tabItem.label}
+              aria-label={tabItem.label}
               style={{
                 flex: 1,
                 padding: 'var(--spacing-ml)',

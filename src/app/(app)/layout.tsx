@@ -7,6 +7,8 @@
 import React from 'react';
 import { TopBar } from '@/components/layout/TopBar';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { DesktopWorkspaceShell } from '@/components/layout/DesktopWorkspaceShell';
+import styles from '@/components/layout/DesktopWorkspaceShell.module.css';
 
 export default function AppLayout({
   children,
@@ -14,12 +16,10 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+    <div className={styles.appShell} data-app-shell="true">
       <TopBar />
-      
-      <main style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {children}
-      </main>
+
+      <DesktopWorkspaceShell>{children}</DesktopWorkspaceShell>
 
       <BottomNav />
     </div>

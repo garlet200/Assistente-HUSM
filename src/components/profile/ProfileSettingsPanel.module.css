@@ -80,8 +80,18 @@
 }
 
 .roleButtonsRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
   gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.roleButton {
+  padding: var(--spacing-sm) var(--spacing-ml);
+  font-size: 0.875rem;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .roleNote {

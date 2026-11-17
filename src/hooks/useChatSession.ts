@@ -29,6 +29,7 @@ import {
   DEFAULT_SESSION_TITLES,
   SCROLL_BOTTOM_THRESHOLD_PX,
   AUTO_SCROLL_DELAY_MS,
+  notifySessionsUpdated,
 } from '@/lib/constants/session';
 import { exportConversationAsPdf } from '@/lib/utils/exporters';
 import { ASSISTANT_UNAVAILABLE_MESSAGE } from '@/lib/utils/formatters';
@@ -128,6 +129,7 @@ export function useChatSession(routeChatId: string) {
     setActiveChatId(createdChat.id);
     setChatTitle(createdChat.title);
     window.history.replaceState(null, '', `/chat/${createdChat.id}`);
+    notifySessionsUpdated();
     return createdChat.id;
   };
 

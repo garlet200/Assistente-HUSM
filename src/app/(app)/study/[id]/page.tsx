@@ -80,9 +80,9 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
       />
 
       <div
+        className="workspace-card"
         style={{
           flex: 1,
-          margin: 'var(--spacing-md)',
           backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
           boxShadow: 'var(--shadow-extruded-flat)',
           borderRadius: 'var(--radius-radius-large)',
@@ -97,6 +97,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
           style={{
             flex: 1,
             overflowY: 'auto',
+            scrollbarGutter: 'stable',
             padding: 'var(--spacing-lg)',
             display: 'flex',
             flexDirection: 'column',

@@ -7,7 +7,16 @@
 export const SESSION_STORAGE_KEYS = {
   ACTIVE_CHAT_ID: 'activeChatId',
   ACTIVE_STUDY_ID: 'activeStudyId',
+  PENDING_STUDY_TOPIC: 'pendingStudyTopic',
 } as const;
+
+export const SESSIONS_UPDATED_EVENT = 'medhusm:sessions-updated';
+
+export function notifySessionsUpdated(): void {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(SESSIONS_UPDATED_EVENT));
+  }
+}
 
 export const DEFAULT_SESSION_TITLES = {
   NEW_CHAT: 'Novo Caso Clínico',

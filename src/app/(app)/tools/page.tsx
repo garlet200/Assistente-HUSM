@@ -7,12 +7,13 @@
  */
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Activity } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export default function ToolsMenu() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -28,6 +29,8 @@ export default function ToolsMenu() {
   const handleNavigateToCalculator = () => {
     router.push('/tools/cha2ds2-vasc');
   };
+
+  const isCha2ds2VascActive = pathname === '/tools/cha2ds2-vasc';
 
   return (
     <div
@@ -71,7 +74,10 @@ export default function ToolsMenu() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 'var(--spacing-ml)',
-            color: 'var(--color-semantic-text-textdark)',
+            color: isCha2ds2VascActive
+              ? 'var(--color-semantic-accent-accentprimary)'
+              : 'var(--color-semantic-text-textdark)',
+            boxShadow: isCha2ds2VascActive ? 'var(--shadow-inset-medium)' : undefined,
             fontFamily: 'var(--typography-fontfamilies-mainsans)',
           }}
         >

@@ -7,7 +7,10 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SessionSummaryItem } from '@/components/common/SessionHistoryList';
 import { AIRequest, AIResponse } from '@/lib/ai/types';
-import { STUDY_ERROR_MESSAGE_ID_PREFIX } from '@/lib/constants/session';
+import {
+  notifySessionsUpdated,
+  STUDY_ERROR_MESSAGE_ID_PREFIX,
+} from '@/lib/constants/session';
 import { ExportableCardItem } from '@/lib/utils/exporters';
 import {
   DatabaseMessageRow,
@@ -176,6 +179,7 @@ export async function deleteSessionFromDatabase(
     console.error('Erro ao excluir sessão na tabela chats:', chatDeleteError);
     return false;
   }
+  notifySessionsUpdated();
   return true;
 }
 
@@ -194,7 +198,9 @@ export async function updateSessionTitleInDatabase(
 
   if (updateError) {
     console.error('Erro ao atualizar título da sessão no Supabase:', updateError);
+    return;
   }
+  notifySessionsUpdated();
 }
 
 /** Updates `updated_at` timestamp of a chat session after a new AI response is persisted. */

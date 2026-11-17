@@ -49,23 +49,64 @@
   padding: 0;
 }
 
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-semantic-boxshadow-boxshadowfxdark) transparent;
+  }
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: var(--spacing-lg);
+  border-radius: var(--radius-radius-full);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-semantic-boxshadow-boxshadowfxdark);
+  border-radius: var(--radius-radius-full);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-semantic-accent-accentprimary);
+}
+
 body {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   color: var(--color-semantic-text-textdark);
   font-family: var(--typography-fontfamilies-mainsans), sans-serif;
-  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   
-  /* Restrict max width for desktop to look like a mobile app */
+  /* Restrict max width for mobile/default; expanded on desktop (>= 1024px) */
   max-width: 480px;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.05); /* Optional: add a subtle drop shadow on desktop */
+  box-shadow: 0 0 20px rgba(0,0,0,0.05);
+}
+
+body:has([data-app-shell="true"]) {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  body {
+    max-width: none;
+    box-shadow: none;
+  }
 }
 
 /* Ensure html also has the background color so the sides aren't white */
 html {
   background-color: var(--color-semantic-backgroundcolor-backgrounddimmer, #f0f0f0);
+  overflow-x: hidden;
 }
 
 a {
@@ -150,9 +191,31 @@ input:focus-visible {
   z-index: 11;
 }
 
+.workspace-card {
+  margin: var(--spacing-md);
+}
+
+.workspace-page {
+  padding: var(--spacing-lg);
+}
+
 @media (max-width: 768px) {
   .chat-footer {
     padding: var(--spacing-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .chat-footer {
+    padding: var(--spacing-md) 0 0 0;
+  }
+
+  .workspace-card {
+    margin: 0;
+  }
+
+  .workspace-page {
+    padding: var(--spacing-sm);
   }
 }
 

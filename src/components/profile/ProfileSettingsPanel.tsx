@@ -108,7 +108,7 @@ export function ProfileSettingsPanel() {
                   setRoleInput('student');
                   setSaveFeedback(null);
                 }}
-                style={{ flex: 1 }}
+                className={styles.roleButton}
               >
                 Estudante
               </Button>
@@ -119,7 +119,7 @@ export function ProfileSettingsPanel() {
                   setRoleInput('doctor');
                   setSaveFeedback(null);
                 }}
-                style={{ flex: 1 }}
+                className={styles.roleButton}
               >
                 Profissional
               </Button>

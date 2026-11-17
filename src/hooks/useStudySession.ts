@@ -53,38 +53,7 @@ export function useStudySession(routeSessionId: string) {
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const mainScrollContainerRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!user) {
-      router.push('/');
-      return;
-    }
-    if (routeSessionId === 'new') return;
-    sessionStorage.setItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID, routeSessionId);
-
-    const loadStudySessionFromDatabase = async (targetSessionId: string): Promise<void> => {
-      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(supabase, targetSessionId);
-      if (title) {
-        setSessionTitle(title);
-        const extractedTopic = title.replace(STUDY_TITLE_PREFIX_REGEX, '');
-        if (extractedTopic) setSelectedTopic(extractedTopic);
-      }
-      if (!databaseMessages || databaseMessages.length === 0) return;
-      setHasSelectedTopic(true);
-
-      const firstTopicMsg = databaseMessages.find(
-        (m: DatabaseMessageRow) => m.role === 'user' && m.content.startsWith(STUDY_TOPIC_PROMPT_PREFIX)
-      );
-      if (firstTopicMsg) setSelectedTopic(firstTopicMsg.content.replace(STUDY_TOPIC_PROMPT_PREFIX, ''));
-      setMessages(databaseMessages.map(mapDatabaseRowToStudyMessage));
-    };
-
-    void loadStudySessionFromDatabase(routeSessionId);
-  }, [user, router, routeSessionId, supabase]);
-
-  useEffect(() => {
-    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoadingAiResponse]);
+  const hasAutoStartedPendingTopicRef = useRef(false);
 
   const handleTitleCommit = async (newTitleText: string): Promise<void> => {
     const trimmedTitle = newTitleText.trim() || DEFAULT_SESSION_TITLES.STUDY_DEFAULT;
@@ -181,6 +150,47 @@ export function useStudySession(routeSessionId: string) {
       setIsLoadingAiResponse(false);
     }
   };
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/');
+      return;
+    }
+    if (routeSessionId === 'new') return;
+    sessionStorage.setItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID, routeSessionId);
+
+    const loadStudySessionFromDatabase = async (targetSessionId: string): Promise<void> => {
+      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(supabase, targetSessionId);
+      if (title) {
+        setSessionTitle(title);
+        const extractedTopic = title.replace(STUDY_TITLE_PREFIX_REGEX, '');
+        if (extractedTopic) setSelectedTopic(extractedTopic);
+      }
+      if (!databaseMessages || databaseMessages.length === 0) {
+        const pendingTopic = sessionStorage.getItem(SESSION_STORAGE_KEYS.PENDING_STUDY_TOPIC);
+        if (pendingTopic && !hasAutoStartedPendingTopicRef.current) {
+          hasAutoStartedPendingTopicRef.current = true;
+          sessionStorage.removeItem(SESSION_STORAGE_KEYS.PENDING_STUDY_TOPIC);
+          await handleStartStudy(pendingTopic);
+        }
+        return;
+      }
+      setHasSelectedTopic(true);
+
+      const firstTopicMsg = databaseMessages.find(
+        (m: DatabaseMessageRow) => m.role === 'user' && m.content.startsWith(STUDY_TOPIC_PROMPT_PREFIX)
+      );
+      if (firstTopicMsg) setSelectedTopic(firstTopicMsg.content.replace(STUDY_TOPIC_PROMPT_PREFIX, ''));
+      setMessages(databaseMessages.map(mapDatabaseRowToStudyMessage));
+    };
+
+    void loadStudySessionFromDatabase(routeSessionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, router, routeSessionId, supabase]);
+
+  useEffect(() => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoadingAiResponse]);
 
   const handleAnswerSelect = async (questionMessageId: string, chosenOptionText: string): Promise<void> => {
     setMessages((prev) => prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg)));

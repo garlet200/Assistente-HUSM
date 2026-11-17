@@ -30,6 +30,9 @@ const MAIN_CONTAINER_STYLE: React.CSSProperties = {
   gap: 'var(--spacing-lg)',
   flex: 1,
   justifyContent: 'center',
+  maxWidth: '480px',
+  width: '100%',
+  margin: '0 auto',
 };
 
 function getAuthSubmitButtonLabel(isSubmittingAuth: boolean, isSignUpMode: boolean): string {

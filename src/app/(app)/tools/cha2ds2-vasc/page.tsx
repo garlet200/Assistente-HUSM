@@ -104,8 +104,8 @@ export default function Cha2ds2VascCalculator() {
 
   return (
     <div
+      className="workspace-page"
       style={{
-        padding: 'var(--spacing-lg)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--spacing-lg)',

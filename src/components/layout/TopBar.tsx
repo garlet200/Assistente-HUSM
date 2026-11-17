@@ -2,111 +2,20 @@
 
 /**
  * @file TopBar.tsx
- * @description Cabeçalho superior da aplicação autenticada contendo navegação de retorno,
- * identidade visual MedHUSM, gatilho do modal informativo/ético e menu de perfil expandido.
+ * @description Cabeçalho superior da aplicação autenticada com navegação integrada no Desktop,
+ * identidade visual MedHUSM, gatilho do modal institucional e menu dropdown do usuário.
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, User, Info, Sliders, ShieldAlert, LogOut } from 'lucide-react';
+import { ArrowLeft, User, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
-import { Card } from '@/components/ui/Card';
 import { AppInfoModal } from '@/components/common/AppInfoModal';
 import { maskEmailAddress } from '@/lib/utils/formatters';
+import { NAVIGATION_TAB_ITEMS, resolveTabDestinationPath } from './BottomNav';
+import { UserProfileDropdown } from './UserProfileDropdown';
 import styles from '@/components/ui/ui.module.css';
-
-interface UserProfileDropdownProps {
-  userName: string;
-  maskedEmail: string;
-  userRoleBadgeLabel: string;
-  aiLanguageLevel: number;
-  aiDetailLevel: number;
-  onNavigateProfile: () => void;
-  onNavigatePreferences: () => void;
-  onOpenEthicalGuidelines: () => void;
-  onLogout: () => void;
-}
-
-function UserProfileDropdown({
-  userName,
-  maskedEmail,
-  userRoleBadgeLabel,
-  aiLanguageLevel,
-  aiDetailLevel,
-  onNavigateProfile,
-  onNavigatePreferences,
-  onOpenEthicalGuidelines,
-  onLogout,
-}: UserProfileDropdownProps) {
-  return (
-    <Card
-      variant="out"
-      style={{
-        position: 'absolute',
-        top: '56px',
-        right: '0',
-        padding: 'var(--spacing-ml)',
-        width: '236px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--spacing-min)',
-        zIndex: 100,
-      }}
-    >
-      <div
-        style={{
-          padding: '0 var(--spacing-sm) var(--spacing-sm) var(--spacing-sm)',
-          borderBottom:
-            'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
-          marginBottom: 'var(--spacing-min)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '2px',
-        }}
-      >
-        <p style={{ fontWeight: 'var(--typography-fontweights-semibold)', fontSize: '0.9rem', margin: 0 }}>
-          {userName}
-        </p>
-        <p style={{ fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textlight)', margin: 0 }}>
-          {maskedEmail}
-        </p>
-        <p style={{ fontSize: 'var(--typography-fontsizes-caption)', color: 'var(--color-semantic-text-textdark)', margin: '2px 0 0 0' }}>
-          {userRoleBadgeLabel} • Ling. {aiLanguageLevel}/5 • Det. {aiDetailLevel}/5
-        </p>
-      </div>
-
-      <button type="button" className={styles.menuItem} style={{ width: '100%', justifyContent: 'flex-start', padding: 'var(--spacing-sm) var(--spacing-ml)' }} onClick={onNavigateProfile}>
-        <User size={16} />
-        <span>Meu Perfil</span>
-      </button>
-
-      <button type="button" className={styles.menuItem} style={{ width: '100%', justifyContent: 'flex-start', padding: 'var(--spacing-sm) var(--spacing-ml)' }} onClick={onNavigatePreferences}>
-        <Sliders size={16} />
-        <span>Preferências de IA</span>
-      </button>
-
-      <button type="button" className={styles.menuItem} style={{ width: '100%', justifyContent: 'flex-start', padding: 'var(--spacing-sm) var(--spacing-ml)' }} onClick={onOpenEthicalGuidelines}>
-        <ShieldAlert size={16} />
-        <span>Diretrizes Éticas</span>
-      </button>
-
-      <button
-        type="button"
-        className={styles.menuItem}
-        style={{
-          width: '100%',
-          justifyContent: 'flex-start',
-          padding: 'var(--spacing-sm) var(--spacing-ml)',
-          color: 'var(--color-primitive-general-error)',
-        }}
-        onClick={onLogout}
-      >
-        <LogOut size={16} />
-        <span>Sair</span>
-      </button>
-    </Card>
-  );
-}
+import shellStyles from './DesktopWorkspaceShell.module.css';
 
 export function TopBar() {
   const router = useRouter();
@@ -149,6 +58,7 @@ export function TopBar() {
 
   const isRootTabRoute =
     pathname === '/chat' || pathname === '/study' || pathname === '/tools' || pathname === '/';
+  const isProfileRoute = pathname.startsWith('/profile');
   const userRoleBadgeLabel = user.role === 'doctor' ? 'Profissional' : 'Estudante';
 
   return (
@@ -162,48 +72,63 @@ export function TopBar() {
           backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddefault)',
           position: 'relative',
           zIndex: 30,
+          gap: 'var(--spacing-md)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: '88px' }}>
-          {!isRootTabRoute ? (
+        <div className={shellStyles.topBarLeftSlot}>
+          {!isRootTabRoute && (
             <button
               type="button"
-              className="neu-button"
+              className={`neu-button ${isProfileRoute ? '' : shellStyles.mobileOnly}`}
               onClick={() => router.back()}
               style={{
                 border: 'none',
                 borderRadius: 'var(--radius-radius-full)',
                 width: '40px',
                 height: '40px',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--color-semantic-text-textdark)',
+                flexShrink: 0,
               }}
               title="Voltar"
               aria-label="Voltar"
             >
               <ArrowLeft size={20} />
             </button>
-          ) : (
-            <div style={{ width: '40px', height: '40px' }} />
           )}
+          <span className={shellStyles.topBarBrandDesktop}>MedHUSM</span>
         </div>
 
-        <div
-          style={{
-            fontWeight: 'var(--typography-fontweights-semibold)',
-            color: 'var(--color-semantic-text-textdark)',
-            fontSize: 'var(--typography-fontsizes-subheading)',
-            fontFamily: 'var(--typography-fontfamilies-mainmono)',
-            fontStyle: 'italic',
-            textAlign: 'center',
-            flex: 1,
-          }}
-        >
-          MedHUSM
-        </div>
+        <div className={shellStyles.topBarBrandMobile}>MedHUSM</div>
+
+        <nav className={shellStyles.desktopOnlyNav} aria-label="Navegação Principal">
+          {NAVIGATION_TAB_ITEMS.map((tabItem) => {
+            const isActive = pathname.startsWith(tabItem.path);
+            return (
+              <button
+                key={tabItem.path}
+                type="button"
+                className={styles.menuItem}
+                onClick={() => router.push(resolveTabDestinationPath(tabItem, pathname))}
+                style={{
+                  flexDirection: 'row',
+                  gap: 'var(--spacing-sm)',
+                  padding: 'var(--spacing-sm) var(--spacing-md)',
+                  borderRadius: 'var(--radius-radius-large)',
+                  color: isActive
+                    ? 'var(--color-semantic-accent-accentprimary)'
+                    : 'var(--color-semantic-text-textdark)',
+                  boxShadow: isActive ? 'var(--shadow-inset-medium)' : 'none',
+                }}
+              >
+                {tabItem.icon}
+                <span>{tabItem.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 'var(--spacing-sm)', minWidth: '88px' }}>
           <button

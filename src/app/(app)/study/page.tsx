@@ -22,6 +22,7 @@ import {
 import {
   SESSION_STORAGE_KEYS,
   DEFAULT_SESSION_TITLES,
+  notifySessionsUpdated,
 } from '@/lib/constants/session';
 
 export default function StudyHub() {
@@ -71,6 +72,7 @@ export default function StudyHub() {
     }
 
     if (createdSession) {
+      notifySessionsUpdated();
       router.push(`/study/${createdSession.id}`);
     }
   };

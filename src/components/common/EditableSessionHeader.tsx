@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import { MoreVertical, Files, Trash2 } from 'lucide-react';
 import { ActionPopupModal } from './ActionPopupModal';
+import shellStyles from '@/components/layout/DesktopWorkspaceShell.module.css';
 
 interface EditableSessionHeaderProps {
   title: string;
@@ -35,17 +36,7 @@ export function EditableSessionHeader({
 
   return (
     <>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 'var(--spacing-ml)',
-          padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)',
-          backgroundColor: 'transparent',
-          ...containerStyle,
-        }}
-      >
+      <div className={shellStyles.sessionHeader} style={containerStyle}>
         <h1
           style={{
             flex: 1,

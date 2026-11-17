@@ -27,12 +27,14 @@ export default function ProfilePage() {
 
   return (
     <div
+      className="workspace-page"
       style={{
-        padding: 'var(--spacing-lg)',
         display: 'flex',
         flexDirection: 'column',
         gap: 'var(--spacing-lg)',
         width: '100%',
+        maxWidth: '560px',
+        margin: '0 auto',
       }}
     >
       <div>

@@ -25,6 +25,7 @@ interface SessionHistoryListProps {
   emptyMessage: string;
   isLoading: boolean;
   sessions: SessionSummaryItem[];
+  activeSessionId?: string;
   onCreateNewSession: () => void;
   onSelectSession: (sessionId: string) => void;
   onRenameSession?: (sessionId: string, newTitle: string) => void | Promise<void>;
@@ -40,6 +41,7 @@ export function SessionHistoryList({
   emptyMessage,
   isLoading,
   sessions,
+  activeSessionId,
   onCreateNewSession,
   onSelectSession,
   onRenameSession,
@@ -65,31 +67,36 @@ export function SessionHistoryList({
       );
     }
 
-    return sessions.map((session) => (
-      <div
-        key={session.id}
-        role="button"
-        tabIndex={0}
-        className="neu-button"
-        onClick={() => onSelectSession(session.id)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onSelectSession(session.id);
-          }
-        }}
-        style={{
-          borderRadius: 'var(--radius-radius-medium)',
-          padding: 'var(--spacing-md-lg)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          textAlign: 'left',
-          color: 'var(--color-semantic-text-textdark)',
-          width: '100%',
-          gap: 'var(--spacing-sm)',
-        }}
-      >
+    return sessions.map((session) => {
+      const isActiveSession = session.id === activeSessionId;
+      return (
+        <div
+          key={session.id}
+          role="button"
+          tabIndex={0}
+          className="neu-button"
+          onClick={() => onSelectSession(session.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onSelectSession(session.id);
+            }
+          }}
+          style={{
+            borderRadius: 'var(--radius-radius-medium)',
+            padding: 'var(--spacing-md-lg)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            textAlign: 'left',
+            color: isActiveSession
+              ? 'var(--color-semantic-accent-accentprimary)'
+              : 'var(--color-semantic-text-textdark)',
+            boxShadow: isActiveSession ? 'var(--shadow-inset-medium)' : undefined,
+            width: '100%',
+            gap: 'var(--spacing-sm)',
+          }}
+        >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -131,7 +138,8 @@ export function SessionHistoryList({
           <MoreVertical size={18} />
         </button>
       </div>
-    ));
+      );
+    });
   };
 
   return (
