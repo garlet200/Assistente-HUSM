@@ -100,6 +100,13 @@
   font-size: var(--typography-fontsizes-caption);
 }
 
+.helperText {
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-caption);
+  color: var(--color-semantic-text-textlight);
+  line-height: var(--typography-lineheights-body-caption);
+}
+
 .input {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   border: none;
