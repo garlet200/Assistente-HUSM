@@ -234,3 +234,24 @@ ul, ol {
   margin-left: var(--spacing-lg);
   margin-bottom: var(--spacing-sm);
 }
+
+/* Dev Layout X-Ray Outlines (zero layout shift via outline) */
+html[data-dev-mode="true"]:not([data-dev-outlines="false"]) [data-dev-flex="true"] {
+  outline: 1px dotted rgba(33, 150, 243, 0.65) !important;
+  outline-offset: -1px;
+}
+
+html[data-dev-mode="true"]:not([data-dev-outlines="false"]) [data-dev-grid="true"] {
+  outline: 1px dashed rgba(156, 39, 176, 0.75) !important;
+  outline-offset: -1px;
+}
+
+html[data-dev-mode="true"]:not([data-dev-outlines="false"]) :is(button, input, .card) {
+  outline: 1px solid rgba(76, 175, 80, 0.6) !important;
+  outline-offset: -1px;
+}
+
+html[data-dev-mode="true"]:not([data-dev-outlines="false"]) [data-dev-overflow="true"] {
+  outline: 1px solid rgba(244, 67, 54, 0.7) !important;
+  outline-offset: -1px;
+}

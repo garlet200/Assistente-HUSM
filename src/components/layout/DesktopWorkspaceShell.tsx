@@ -102,7 +102,7 @@ export function DesktopWorkspaceShell({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className={styles.desktopWorkspace}>
+    <div className={styles.desktopWorkspace} data-desktop-workspace="true">
       <aside className={styles.columnLeft}>
         <div className={styles.columnLeftScroll}>
           <DesktopSidebarColumn />
