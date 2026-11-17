@@ -1,0 +1,88 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-min);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-body);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-text-textdark);
+}
+
+.subtitle {
+  margin: 0;
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-caption);
+  color: var(--color-semantic-text-textlight);
+  line-height: var(--typography-lineheights-body-caption);
+}
+
+.dialsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-ml);
+}
+
+@media (max-width: 360px) {
+  .dialsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.divider {
+  border: none;
+  border-top: var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark);
+  margin: var(--spacing-min) 0;
+}
+
+.contrastRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.contrastTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.comingSoonTag {
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-caption);
+  color: var(--color-semantic-text-textlight);
+  font-style: italic;
+}
+
+.disabledToggleTrack {
+  width: 48px;
+  height: 26px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  box-shadow: var(--shadow-inset-medium);
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  opacity: var(--opacity-md);
+  cursor: not-allowed;
+  border: none;
+  flex-shrink: 0;
+}
+
+.disabledToggleThumb {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  box-shadow: var(--shadow-extruded-flat);
+}

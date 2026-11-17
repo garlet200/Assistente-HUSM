@@ -3,7 +3,7 @@
 /**
  * @file useStudySession.ts
  * @description Hook de gerenciamento de estado e progressão do Simulador de Casos Clínicos (Modo Estudo),
- * controlando geração de questões MCQ em JSON, avaliação de respostas e persistência via sessionRepository.
+ * controlando geração de questões MCQ em JSON, avaliação de respostas, edição/exclusão e exportação PDF.
  */
 
 import { useState, useRef, useEffect } from 'react';
@@ -14,6 +14,7 @@ import {
   buildStudyConversationHistory,
   DatabaseMessageRow,
   deleteMessageByIdSilently,
+  deleteSessionFromDatabase,
   fetchSessionTitleAndMessages,
   insertSessionMessageRecord,
   mapDatabaseRowToStudyMessage,
@@ -59,33 +60,22 @@ export function useStudySession(routeSessionId: string) {
       return;
     }
     if (routeSessionId === 'new') return;
-
     sessionStorage.setItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID, routeSessionId);
 
     const loadStudySessionFromDatabase = async (targetSessionId: string): Promise<void> => {
-      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(
-        supabase,
-        targetSessionId
-      );
-
+      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(supabase, targetSessionId);
       if (title) {
         setSessionTitle(title);
         const extractedTopic = title.replace(STUDY_TITLE_PREFIX_REGEX, '');
         if (extractedTopic) setSelectedTopic(extractedTopic);
       }
-
       if (!databaseMessages || databaseMessages.length === 0) return;
       setHasSelectedTopic(true);
 
-      const firstUserTopicMessage = databaseMessages.find(
-        (messageRecord: DatabaseMessageRow) =>
-          messageRecord.role === 'user' &&
-          messageRecord.content.startsWith(STUDY_TOPIC_PROMPT_PREFIX)
+      const firstTopicMsg = databaseMessages.find(
+        (m: DatabaseMessageRow) => m.role === 'user' && m.content.startsWith(STUDY_TOPIC_PROMPT_PREFIX)
       );
-      if (firstUserTopicMessage) {
-        setSelectedTopic(firstUserTopicMessage.content.replace(STUDY_TOPIC_PROMPT_PREFIX, ''));
-      }
-
+      if (firstTopicMsg) setSelectedTopic(firstTopicMsg.content.replace(STUDY_TOPIC_PROMPT_PREFIX, ''));
       setMessages(databaseMessages.map(mapDatabaseRowToStudyMessage));
     };
 
@@ -166,11 +156,9 @@ export function useStudySession(routeSessionId: string) {
   const handleStartStudy = async (topicToStudy: string): Promise<void> => {
     setSelectedTopic(topicToStudy);
     setHasSelectedTopic(true);
-
     if (routeSessionId !== 'new' && sessionTitle === DEFAULT_SESSION_TITLES.NEW_STUDY) {
       await handleTitleCommit(`Estudo: ${topicToStudy}`);
     }
-
     setMessages([]);
     setIsLoadingAiResponse(true);
 
@@ -194,32 +182,15 @@ export function useStudySession(routeSessionId: string) {
     }
   };
 
-  const handleAnswerSelect = async (
-    questionMessageId: string,
-    chosenOptionText: string
-  ): Promise<void> => {
-    setMessages((prev) =>
-      prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg))
-    );
-
+  const handleAnswerSelect = async (questionMessageId: string, chosenOptionText: string): Promise<void> => {
+    setMessages((prev) => prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg)));
     const targetQuestion = messages.find((msg) => msg.id === questionMessageId);
     if (targetQuestion) {
-      await updateMessageMetadataInDatabase(supabase, routeSessionId, questionMessageId, {
-        ...targetQuestion,
-        answered: true,
-      });
+      await updateMessageMetadataInDatabase(supabase, routeSessionId, questionMessageId, { ...targetQuestion, answered: true });
     }
 
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: 'user', content: chosenOptionText },
-    ]);
-    await insertSessionMessageRecord(supabase, {
-      sessionId: routeSessionId,
-      role: 'user',
-      content: chosenOptionText,
-    });
-
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content: chosenOptionText }]);
+    await insertSessionMessageRecord(supabase, { sessionId: routeSessionId, role: 'user', content: chosenOptionText });
     setIsLoadingAiResponse(true);
 
     try {
@@ -245,7 +216,6 @@ export function useStudySession(routeSessionId: string) {
 
     const errorNoticeMessage = messages[errorItemIndex];
     const precedingUserMessage = messages[errorItemIndex - 1];
-
     const updatedMessagesList = [...messages];
     updatedMessagesList.splice(errorItemIndex - 1, 2);
     setMessages(updatedMessagesList);
@@ -257,30 +227,25 @@ export function useStudySession(routeSessionId: string) {
       if (selectedTopic) await handleStartStudy(selectedTopic);
       return;
     }
-
     if (precedingUserMessage.content.startsWith(STUDY_TOPIC_PROMPT_PREFIX)) {
-      const topicToRetry = precedingUserMessage.content.replace(STUDY_TOPIC_PROMPT_PREFIX, '');
-      await handleStartStudy(topicToRetry);
+      await handleStartStudy(precedingUserMessage.content.replace(STUDY_TOPIC_PROMPT_PREFIX, ''));
       return;
     }
 
     const previousQuestion = messages[errorItemIndex - 2];
     if (!previousQuestion) return;
-
-    await updateMessageMetadataInDatabase(supabase, routeSessionId, previousQuestion.id, {
-      ...previousQuestion,
-      answered: false,
-    });
-
-    setMessages((prev) =>
-      prev.map((msg) => (msg.id === previousQuestion.id ? { ...msg, answered: false } : msg))
-    );
-
+    await updateMessageMetadataInDatabase(supabase, routeSessionId, previousQuestion.id, { ...previousQuestion, answered: false });
+    setMessages((prev) => prev.map((msg) => (msg.id === previousQuestion.id ? { ...msg, answered: false } : msg)));
     await handleAnswerSelect(previousQuestion.id, precedingUserMessage.content);
   };
 
-  const resolvedDisplayTopic =
-    selectedTopic || sessionTitle.replace(STUDY_TITLE_PREFIX_REGEX, '') || 'Tema de Estudo';
+  const handleDeleteCurrentStudySession = async (): Promise<void> => {
+    await deleteSessionFromDatabase(supabase, routeSessionId);
+    sessionStorage.removeItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID);
+    router.push('/study');
+  };
+
+  const resolvedDisplayTopic = selectedTopic || sessionTitle.replace(STUDY_TITLE_PREFIX_REGEX, '') || 'Tema de Estudo';
 
   return {
     user,
@@ -296,5 +261,6 @@ export function useStudySession(routeSessionId: string) {
     handleStartStudy,
     handleAnswerSelect,
     handleRetryInteraction,
+    handleDeleteCurrentStudySession,
   };
 }

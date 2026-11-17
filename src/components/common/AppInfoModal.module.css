@@ -4,21 +4,24 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 45;
+  background-color: rgba(13, 21, 32, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: var(--spacing-md);
+  padding-bottom: 84px;
 }
 
 .modalDialog {
+  width: calc(100% - var(--spacing-lg) * 2);
+  max-width: 400px;
+  max-height: calc(100dvh - 140px);
   background: var(--color-semantic-backgroundcolor-backgrounddefault);
   border-radius: var(--radius-radius-large);
-  box-shadow: var(--shadow-extruded-large);
-  max-width: 440px;
-  width: 100%;
-  max-height: 90vh;
+  border: none;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -59,15 +62,14 @@
 }
 
 .closeButton {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--color-semantic-text-textdark);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-min);
-  border-radius: var(--radius-radius-full);
+  color: var(--color-semantic-text-textdark);
+  flex-shrink: 0;
 }
 
 .body {

@@ -3,14 +3,18 @@
 /**
  * @file page.tsx
  * @description Hub de Sessões de Estudo (/study) que lista simulações de casos clínicos
- * anteriores (`module = 'study'`) e cria novas sessões no Supabase.
+ * anteriores (`module = 'study'`) e permite criar, renomear ou excluir sessões no Supabase.
  */
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
-import { fetchUserSessionsByModule } from '@/lib/supabase/sessionRepository';
+import {
+  deleteSessionFromDatabase,
+  fetchUserSessionsByModule,
+  updateSessionTitleInDatabase,
+} from '@/lib/supabase/sessionRepository';
 import {
   SessionHistoryList,
   SessionSummaryItem,
@@ -71,8 +75,20 @@ export default function StudyHub() {
     }
   };
 
-  const handleOpenStudySession = (selectedSessionId: string): void => {
-    router.push(`/study/${selectedSessionId}`);
+  const handleRenameStudySession = async (sessionId: string, newTitle: string): Promise<void> => {
+    await updateSessionTitleInDatabase(supabase, sessionId, newTitle);
+    setStudySessions((prev) =>
+      prev.map((session) => (session.id === sessionId ? { ...session, title: newTitle } : session))
+    );
+  };
+
+  const handleDeleteStudySession = async (sessionId: string): Promise<void> => {
+    const deleted = await deleteSessionFromDatabase(supabase, sessionId);
+    if (!deleted) return;
+    if (sessionStorage.getItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID) === sessionId) {
+      sessionStorage.removeItem(SESSION_STORAGE_KEYS.ACTIVE_STUDY_ID);
+    }
+    setStudySessions((prev) => prev.filter((session) => session.id !== sessionId));
   };
 
   return (
@@ -85,7 +101,9 @@ export default function StudyHub() {
       isLoading={isLoadingSessions}
       sessions={studySessions}
       onCreateNewSession={handleCreateNewStudySession}
-      onSelectSession={handleOpenStudySession}
+      onSelectSession={(selectedSessionId) => router.push(`/study/${selectedSessionId}`)}
+      onRenameSession={handleRenameStudySession}
+      onDeleteSession={handleDeleteStudySession}
     />
   );
 }

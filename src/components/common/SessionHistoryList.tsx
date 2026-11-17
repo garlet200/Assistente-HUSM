@@ -3,10 +3,12 @@
 /**
  * @file SessionHistoryList.tsx
  * @description Listagem compartilhada de histórico de sessões (Hub de Chat Clínico e Hub de Estudos)
- * com botão neumórfico de criação de nova sessão e estados de carregamento/vazio.
+ * com botão neumórfico de criação de nova sessão, menu de opções (ActionPopupModal) e estados de carregamento/vazio.
  */
 
-import { Plus, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, MoreVertical, Files, Trash2 } from 'lucide-react';
+import { ActionPopupModal } from './ActionPopupModal';
 import { formatTimestampToLocaleString } from '@/lib/utils/formatters';
 
 export interface SessionSummaryItem {
@@ -25,12 +27,11 @@ interface SessionHistoryListProps {
   sessions: SessionSummaryItem[];
   onCreateNewSession: () => void;
   onSelectSession: (sessionId: string) => void;
+  onRenameSession?: (sessionId: string, newTitle: string) => void | Promise<void>;
+  onDeleteSession?: (sessionId: string) => void | Promise<void>;
+  onExportSessionPdf?: (session: SessionSummaryItem) => void | Promise<void>;
 }
 
-/**
- * Shared hub view displaying a header with a neumorphic "New" action button
- * and a chronological list of saved clinical chat or study sessions.
- */
 export function SessionHistoryList({
   heading,
   subtitle,
@@ -41,7 +42,12 @@ export function SessionHistoryList({
   sessions,
   onCreateNewSession,
   onSelectSession,
+  onRenameSession,
+  onDeleteSession,
+  onExportSessionPdf,
 }: SessionHistoryListProps) {
+  const [activeMenuSession, setActiveMenuSession] = useState<SessionSummaryItem | null>(null);
+
   const renderSessionContent = () => {
     if (isLoading) {
       return (
@@ -60,11 +66,18 @@ export function SessionHistoryList({
     }
 
     return sessions.map((session) => (
-      <button
+      <div
         key={session.id}
-        type="button"
+        role="button"
+        tabIndex={0}
         className="neu-button"
         onClick={() => onSelectSession(session.id)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onSelectSession(session.id);
+          }
+        }}
         style={{
           borderRadius: 'var(--radius-radius-medium)',
           padding: 'var(--spacing-md-lg)',
@@ -74,14 +87,18 @@ export function SessionHistoryList({
           textAlign: 'left',
           color: 'var(--color-semantic-text-textdark)',
           width: '100%',
+          gap: 'var(--spacing-sm)',
         }}
       >
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
               fontWeight: 'var(--typography-fontweights-semibold)',
               fontSize: 'var(--typography-fontsizes-body)',
               marginBottom: 'var(--spacing-min)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {session.title}
@@ -90,10 +107,30 @@ export function SessionHistoryList({
             {formatTimestampToLocaleString(session.updated_at)}
           </div>
         </div>
-        <div style={{ color: 'var(--color-semantic-accent-accentprimary)' }}>
-          <ChevronRight size={20} />
-        </div>
-      </button>
+
+        <button
+          type="button"
+          className="neu-button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setActiveMenuSession(session);
+          }}
+          style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: 'var(--radius-radius-full)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-semantic-text-textdark)',
+            flexShrink: 0,
+          }}
+          title="Opções da sessão"
+          aria-label={`Opções para ${session.title}`}
+        >
+          <MoreVertical size={18} />
+        </button>
+      </div>
     ));
   };
 
@@ -153,6 +190,50 @@ export function SessionHistoryList({
       >
         {renderSessionContent()}
       </div>
+
+      {activeMenuSession && (
+        <ActionPopupModal
+          isOpen={Boolean(activeMenuSession)}
+          title={activeMenuSession.title}
+          onClose={() => setActiveMenuSession(null)}
+          editConfig={
+            onRenameSession
+              ? {
+                  actionLabel: 'Editar nome',
+                  fieldLabel: 'Nome da sessão',
+                  initialValue: activeMenuSession.title,
+                  placeholder: 'Digite o novo nome...',
+                  onSave: async (newTitle) => {
+                    await onRenameSession(activeMenuSession.id, newTitle);
+                  },
+                }
+              : undefined
+          }
+          actions={[
+            ...(onExportSessionPdf
+              ? [
+                  {
+                    id: 'export-session-pdf',
+                    label: 'Exportar toda a conversa em PDF',
+                    icon: <Files size={16} />,
+                    onClick: () => onExportSessionPdf(activeMenuSession),
+                  },
+                ]
+              : []),
+            ...(onDeleteSession
+              ? [
+                  {
+                    id: 'delete-session',
+                    label: 'Excluir',
+                    icon: <Trash2 size={16} />,
+                    variant: 'danger' as const,
+                    onClick: () => onDeleteSession(activeMenuSession.id),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      )}
     </div>
   );
 }

@@ -1,0 +1,123 @@
+.backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  background-color: rgba(13, 21, 32, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 84px;
+}
+
+.popupContainer {
+  width: calc(100% - var(--spacing-lg) * 2);
+  max-width: 400px;
+  max-height: calc(100dvh - 140px);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  border-radius: var(--radius-radius-large);
+  border: none;
+  box-shadow: none;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  overflow-y: auto;
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  color: var(--color-semantic-text-textdark);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--typography-fontsizes-body);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-text-textdark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-semantic-text-textdark);
+  flex-shrink: 0;
+}
+
+.sectionDivider {
+  border: none;
+  border-top: var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark);
+  margin: var(--spacing-min) 0;
+}
+
+.sectionLabel {
+  font-size: var(--typography-fontsizes-caption);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-text-textlight);
+  margin: 0;
+}
+
+.actionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.actionButton {
+  width: 100%;
+  padding: var(--spacing-ml) var(--spacing-md);
+  border-radius: var(--radius-radius-small);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-ml);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-body);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-text-textdark);
+  text-align: left;
+}
+
+.dangerAction {
+  color: var(--color-primitive-general-error);
+}
+
+.textareaField {
+  width: 100%;
+  min-height: 110px;
+  resize: vertical;
+  border-radius: var(--radius-radius-small);
+  padding: var(--spacing-ml) var(--spacing-md);
+  color: var(--color-semantic-text-textdark);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-body);
+  line-height: var(--typography-lineheights-default);
+}
+
+.editActionsRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs, 4px);
+}
+
+.confirmMessage {
+  margin: 0;
+  font-size: var(--typography-fontsizes-body);
+  line-height: var(--typography-lineheights-default);
+  color: var(--color-semantic-text-textdark);
+}

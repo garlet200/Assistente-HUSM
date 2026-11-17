@@ -63,11 +63,11 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
       <button
         type="button"
         onClick={onClose}
-        className={styles.closeButton}
+        className={`neu-button ${styles.closeButton}`}
         title="Fechar"
         aria-label="Fechar"
       >
-        <X size={20} />
+        <X size={16} />
       </button>
     </div>
   );

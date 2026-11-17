@@ -2,105 +2,54 @@
 
 /**
  * @file EditableSessionHeader.tsx
- * @description Cabeçalho compartilhado com edição inline de título para sessões de Chat Clínico e Estudo.
+ * @description Cabeçalho compartilhado para sessões de Chat Clínico e Estudo, com título à esquerda
+ * e botão de opções alinhado à direita acionando o ActionPopupModal.
  */
 
-import React, { useState, useRef } from 'react';
-import { Edit } from 'lucide-react';
-import { INPUT_FOCUS_DELAY_MS } from '@/lib/constants/session';
+import React, { useState } from 'react';
+import { MoreVertical, Files, Trash2 } from 'lucide-react';
+import { ActionPopupModal } from './ActionPopupModal';
 
 interface EditableSessionHeaderProps {
   title: string;
   onTitleChange: (newTitle: string) => void;
-  onTitleCommit: (committedTitle: string) => void;
+  onTitleCommit: (committedTitle: string) => void | Promise<void>;
+  onExportSessionPdf?: () => void | Promise<void>;
+  onDeleteSession?: () => void | Promise<void>;
   placeholder?: string;
   editButtonTitle?: string;
   containerStyle?: React.CSSProperties;
 }
 
-/**
- * Shared editable title header bar used across Clinical Chat and Case Study sessions.
- */
 export function EditableSessionHeader({
   title,
   onTitleChange,
   onTitleCommit,
+  onExportSessionPdf,
+  onDeleteSession,
   placeholder = 'Nome do Caso...',
-  editButtonTitle = 'Editar Nome do Caso',
+  editButtonTitle = 'Opções da Sessão',
   containerStyle,
 }: EditableSessionHeaderProps) {
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const titleInputElementRef = useRef<HTMLInputElement>(null);
-
-  const enableTitleEditingMode = () => {
-    setIsEditingTitle(true);
-    setTimeout(() => {
-      titleInputElementRef.current?.focus();
-    }, INPUT_FOCUS_DELAY_MS);
-  };
-
-  const commitTitleEdit = (valueToCommit: string) => {
-    setIsEditingTitle(false);
-    onTitleCommit(valueToCommit);
-  };
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--spacing-ml)',
-        padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)',
-        backgroundColor: 'transparent',
-        ...containerStyle,
-      }}
-    >
-      <button
-        type="button"
-        className="neu-button"
-        onClick={enableTitleEditingMode}
+    <>
+      <div
         style={{
-          borderRadius: 'var(--radius-radius-full)',
-          width: '36px',
-          height: '36px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--color-semantic-text-textlight)',
-          flexShrink: 0,
+          justifyContent: 'space-between',
+          gap: 'var(--spacing-ml)',
+          padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)',
+          backgroundColor: 'transparent',
+          ...containerStyle,
         }}
-        title={editButtonTitle}
-        aria-label={editButtonTitle}
       >
-        <Edit size={18} />
-      </button>
-
-      {isEditingTitle ? (
-        <input
-          ref={titleInputElementRef}
-          value={title}
-          onChange={(event) => onTitleChange(event.target.value)}
-          onBlur={(event) => commitTitleEdit(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              commitTitleEdit(event.currentTarget.value);
-            }
-          }}
-          placeholder={placeholder}
-          style={{
-            fontSize: '1.2rem',
-            fontWeight: 'var(--typography-fontweights-semibold)',
-            color: 'var(--color-semantic-text-textdark)',
-            background: 'transparent',
-            border: 'none',
-            borderBottom: 'var(--strokewidth-md) solid var(--color-semantic-text-textlight)',
-            width: '100%',
-            fontFamily: 'var(--typography-fontfamilies-mainsans)',
-          }}
-        />
-      ) : (
         <h1
           style={{
+            flex: 1,
+            minWidth: 0,
             fontSize: '1.2rem',
             fontWeight: 'var(--typography-fontweights-semibold)',
             color: 'var(--color-semantic-text-textdark)',
@@ -112,7 +61,66 @@ export function EditableSessionHeader({
         >
           {title}
         </h1>
-      )}
-    </div>
+
+        <button
+          type="button"
+          className="neu-button"
+          onClick={() => setIsPopupOpen(true)}
+          style={{
+            borderRadius: 'var(--radius-radius-full)',
+            width: '36px',
+            height: '36px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-semantic-text-textlight)',
+            flexShrink: 0,
+          }}
+          title={editButtonTitle}
+          aria-label={editButtonTitle}
+        >
+          <MoreVertical size={18} />
+        </button>
+      </div>
+
+      <ActionPopupModal
+        isOpen={isPopupOpen}
+        title={title}
+        onClose={() => setIsPopupOpen(false)}
+        editConfig={{
+          actionLabel: 'Editar nome',
+          fieldLabel: 'Título da sessão',
+          initialValue: title,
+          placeholder,
+          onSave: async (committedTitle) => {
+            onTitleChange(committedTitle);
+            await onTitleCommit(committedTitle);
+          },
+        }}
+        actions={[
+          ...(onExportSessionPdf
+            ? [
+                {
+                  id: 'export-session-pdf',
+                  label: 'Exportar toda a conversa em PDF',
+                  icon: <Files size={16} />,
+                  onClick: () => onExportSessionPdf(),
+                },
+              ]
+            : []),
+          ...(onDeleteSession
+            ? [
+                {
+                  id: 'delete-session',
+                  label: 'Excluir',
+                  icon: <Trash2 size={16} />,
+                  variant: 'danger' as const,
+                  onClick: () => onDeleteSession(),
+                },
+              ]
+            : []),
+        ]}
+      />
+    </>
   );
 }

@@ -3,7 +3,7 @@
 /**
  * @file useChatSession.ts
  * @description Hook de gerenciamento de estado e ciclo de vida do Chat de Raciocínio Clínico,
- * orquestrando Optimistic UI, persistência via sessionRepository e chamadas ao AI Gateway (/api/gateway).
+ * orquestrando Optimistic UI, persistência via sessionRepository, edição/exclusão e exportação PDF.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -14,6 +14,7 @@ import {
   buildChatPreviewTitle,
   buildConversationHistory,
   deleteMessageByIdSilently,
+  deleteSessionFromDatabase,
   fetchSessionTitleAndMessages,
   groupMessagesIntoInteractions,
   insertSessionMessageRecord,
@@ -29,6 +30,7 @@ import {
   SCROLL_BOTTOM_THRESHOLD_PX,
   AUTO_SCROLL_DELAY_MS,
 } from '@/lib/constants/session';
+import { exportConversationAsPdf } from '@/lib/utils/exporters';
 import { ASSISTANT_UNAVAILABLE_MESSAGE } from '@/lib/utils/formatters';
 
 export function useChatSession(routeChatId: string) {
@@ -52,52 +54,33 @@ export function useChatSession(routeChatId: string) {
       router.push('/');
       return;
     }
-
     if (activeChatId !== 'new') {
       sessionStorage.setItem(SESSION_STORAGE_KEYS.ACTIVE_CHAT_ID, activeChatId);
     }
   }, [user, router, activeChatId]);
 
   useEffect(() => {
-    if (routeChatId === 'new' || !user) {
-      return;
-    }
-
+    if (routeChatId === 'new' || !user) return;
     const loadChatHistoryFromDatabase = async (targetChatId: string): Promise<void> => {
       setIsFetchingHistory(true);
-
-      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(
-        supabase,
-        targetChatId
-      );
-
-      if (title) {
-        setChatTitle(title);
-      }
-
-      if (databaseMessages) {
-        setInteractions(groupMessagesIntoInteractions(databaseMessages));
-      }
-
+      const { title, messages: databaseMessages } = await fetchSessionTitleAndMessages(supabase, targetChatId);
+      if (title) setChatTitle(title);
+      if (databaseMessages) setInteractions(groupMessagesIntoInteractions(databaseMessages));
       setIsFetchingHistory(false);
     };
-
     void loadChatHistoryFromDatabase(routeChatId);
   }, [routeChatId, user, supabase]);
 
   useEffect(() => {
-    const hasMessages = interactions.length > 0;
-    if (!isFetchingHistory && hasMessages) {
+    if (!isFetchingHistory && interactions.length > 0) {
       endOfMessagesRef.current?.scrollIntoView({ behavior: 'auto' });
     }
   }, [isFetchingHistory, interactions.length]);
 
   const handleScrollDetection = (): void => {
     if (!mainScrollContainerRef.current) return;
-
     const { scrollTop, scrollHeight, clientHeight } = mainScrollContainerRef.current;
-    const isCloseToBottom = scrollHeight - scrollTop - clientHeight < SCROLL_BOTTOM_THRESHOLD_PX;
-    setShouldShowScrollButton(!isCloseToBottom);
+    setShouldShowScrollButton(scrollHeight - scrollTop - clientHeight >= SCROLL_BOTTOM_THRESHOLD_PX);
   };
 
   const scrollToBottomSmoothly = (): void => {
@@ -116,22 +99,18 @@ export function useChatSession(routeChatId: string) {
     persistedUserMessageId: string | undefined,
     updater: (interaction: Interaction) => Interaction
   ): void => {
-    setInteractions((previousInteractions) =>
-      previousInteractions.map((interaction) => {
-        const isTargetInteraction =
-          interaction.id === temporaryInteractionId ||
-          Boolean(persistedUserMessageId && interaction.userMessageId === persistedUserMessageId);
-
-        return isTargetInteraction ? updater(interaction) : interaction;
+    setInteractions((prev) =>
+      prev.map((item) => {
+        const isTarget =
+          item.id === temporaryInteractionId ||
+          Boolean(persistedUserMessageId && item.userMessageId === persistedUserMessageId);
+        return isTarget ? updater(item) : item;
       })
     );
   };
 
   const ensureActiveChatSessionId = async (promptToSend: string): Promise<string | null> => {
-    if (activeChatId !== 'new') {
-      return activeChatId;
-    }
-
+    if (activeChatId !== 'new') return activeChatId;
     if (!user) return null;
 
     const chatTitlePreview = buildChatPreviewTitle(promptToSend);
@@ -147,6 +126,7 @@ export function useChatSession(routeChatId: string) {
     }
 
     setActiveChatId(createdChat.id);
+    setChatTitle(createdChat.title);
     window.history.replaceState(null, '', `/chat/${createdChat.id}`);
     return createdChat.id;
   };
@@ -162,6 +142,8 @@ export function useChatSession(routeChatId: string) {
       prompt: requestParams.promptToSend,
       role: 'MODEL_ROLE_CLINICAL_REASONING',
       history: requestParams.history,
+      aiLanguageLevel: user?.aiLanguageLevel,
+      aiDetailLevel: user?.aiDetailLevel,
     });
 
     const persistedModelMessage = await insertSessionMessageRecord(supabase, {
@@ -194,33 +176,19 @@ export function useChatSession(routeChatId: string) {
     );
   };
 
-  const handleSend = async (
-    overridePromptText?: string | React.MouseEvent<HTMLButtonElement>
-  ): Promise<void> => {
+  const handleSend = async (overridePromptText?: string | React.MouseEvent<HTMLButtonElement>): Promise<void> => {
     const promptToSend = typeof overridePromptText === 'string' ? overridePromptText : inputPrompt;
-
-    if (!promptToSend.trim() || isLoadingResponse || !user) {
-      return;
-    }
+    if (!promptToSend.trim() || isLoadingResponse || !user) return;
 
     const temporaryInteractionId = crypto.randomUUID();
-    const provisionalInteraction: Interaction = {
-      id: temporaryInteractionId,
-      prompt: promptToSend,
-      response: null,
-      timestamp: new Date(),
-    };
+    setInteractions((prev) => [
+      ...prev,
+      { id: temporaryInteractionId, prompt: promptToSend, response: null, timestamp: new Date() },
+    ]);
 
-    setInteractions((previousInteractions) => [...previousInteractions, provisionalInteraction]);
-
-    if (typeof overridePromptText !== 'string') {
-      setInputPrompt('');
-    }
+    if (typeof overridePromptText !== 'string') setInputPrompt('');
     setIsLoadingResponse(true);
-
-    setTimeout(() => {
-      endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, AUTO_SCROLL_DELAY_MS);
+    setTimeout(() => endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' }), AUTO_SCROLL_DELAY_MS);
 
     const resolvedChatSessionId = await ensureActiveChatSessionId(promptToSend);
     if (!resolvedChatSessionId) {
@@ -235,8 +203,8 @@ export function useChatSession(routeChatId: string) {
     });
 
     if (persistedUserMessage) {
-      updateTargetInteractionInState(temporaryInteractionId, undefined, (interaction) => ({
-        ...interaction,
+      updateTargetInteractionInState(temporaryInteractionId, undefined, (item) => ({
+        ...item,
         userMessageId: persistedUserMessage.id,
       }));
     }
@@ -251,29 +219,38 @@ export function useChatSession(routeChatId: string) {
       });
     } catch (gatewayError) {
       console.error('Erro na chamada do Gateway:', gatewayError);
-
-      updateTargetInteractionInState(
-        temporaryInteractionId,
-        persistedUserMessage?.id,
-        (interaction) => ({
-          ...interaction,
-          response: ASSISTANT_UNAVAILABLE_MESSAGE,
-        })
-      );
+      updateTargetInteractionInState(temporaryInteractionId, persistedUserMessage?.id, (item) => ({
+        ...item,
+        response: ASSISTANT_UNAVAILABLE_MESSAGE,
+      }));
     } finally {
       setIsLoadingResponse(false);
     }
   };
 
   const handleRetryInteraction = async (interactionToRetry: Interaction): Promise<void> => {
-    setInteractions((previousInteractions) =>
-      previousInteractions.filter((interaction) => interaction.id !== interactionToRetry.id)
-    );
-
+    setInteractions((prev) => prev.filter((item) => item.id !== interactionToRetry.id));
     deleteMessageByIdSilently(supabase, interactionToRetry.userMessageId, 'chat user retry');
     deleteMessageByIdSilently(supabase, interactionToRetry.modelMessageId, 'chat model retry');
-
     await handleSend(interactionToRetry.prompt);
+  };
+
+  const handleDeleteCurrentSession = async (): Promise<void> => {
+    await deleteSessionFromDatabase(supabase, activeChatId);
+    sessionStorage.removeItem(SESSION_STORAGE_KEYS.ACTIVE_CHAT_ID);
+    router.push('/chat');
+  };
+
+  const handleExportCurrentSessionPdf = (): void => {
+    exportConversationAsPdf(
+      chatTitle,
+      interactions.map((item) => ({
+        heading: item.prompt,
+        body: item.response || '',
+        timestamp: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        citations: item.citations,
+      }))
+    );
   };
 
   return {
@@ -293,5 +270,7 @@ export function useChatSession(routeChatId: string) {
     handleTitleCommit,
     handleSend,
     handleRetryInteraction,
+    handleDeleteCurrentSession,
+    handleExportCurrentSessionPdf,
   };
 }

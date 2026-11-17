@@ -31,10 +31,6 @@ interface StudyCardContainerProps {
   children: React.ReactNode;
 }
 
-/**
- * Shared container shell for both active study simulation steps and loading states.
- * Eliminates visual duplication of the topic header and divider.
- */
 function StudyCardContainer({ topicTitle, children }: StudyCardContainerProps) {
   return (
     <div
@@ -67,8 +63,7 @@ function StudyCardContainer({ topicTitle, children }: StudyCardContainerProps) {
         <hr
           style={{
             border: 'none',
-            borderTop:
-              'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
+            borderTop: 'var(--strokewidth-min) solid var(--color-semantic-boxshadow-boxshadowfxdark)',
             margin: 'var(--spacing-ml) 0',
           }}
         />
@@ -87,9 +82,6 @@ interface StudySimulationCardProps {
   onRetryInteraction: (targetMessageId: string) => void;
 }
 
-/**
- * Renders a clinical case simulation step (either an interactive MCQ or a markdown message with retry).
- */
 export function StudySimulationCard({
   topicTitle,
   studyMessage,
@@ -148,14 +140,7 @@ export function StudySimulationCard({
   );
 }
 
-interface StudyLoadingCardProps {
-  topicTitle: string;
-}
-
-/**
- * Renders the loading state card while the AI generates the next simulated clinical case step.
- */
-export function StudyLoadingCard({ topicTitle }: StudyLoadingCardProps) {
+export function StudyLoadingCard({ topicTitle }: { topicTitle: string }) {
   return (
     <StudyCardContainer topicTitle={topicTitle}>
       <div

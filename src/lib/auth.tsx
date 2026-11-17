@@ -3,7 +3,7 @@
 /**
  * @file auth.tsx
  * @description Contexto global de autenticação (AuthProvider e hook useAuth) integrado ao
- * Supabase Auth, gerenciando estado de sessão, perfil (student/doctor) e aceite de onboarding ético.
+ * Supabase Auth, gerenciando estado de sessão, perfil, preferências de IA e onboarding ético.
  */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -17,6 +17,17 @@ export interface AuthenticatedUser {
   email?: string;
   role: 'student' | 'doctor';
   hasCompletedOnboarding: boolean;
+  aiLanguageLevel: number;
+  aiDetailLevel: number;
+  highContrast: boolean;
+  avatarUrl?: string;
+}
+
+export interface UserProfileUpdates {
+  name?: string;
+  role?: 'student' | 'doctor';
+  aiLanguageLevel?: number;
+  aiDetailLevel?: number;
 }
 
 interface AuthContextType {
@@ -25,9 +36,18 @@ interface AuthContextType {
   setUser: (user: AuthenticatedUser | null) => void;
   logout: () => Promise<void>;
   completeOnboarding: () => void;
+  updateUserProfile: (updates: UserProfileUpdates) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function parseBoundedScaleLevel(rawValue: unknown, fallback = 3): number {
+  const numericValue = Number(rawValue);
+  if (Number.isInteger(numericValue) && numericValue >= 1 && numericValue <= 5) {
+    return numericValue;
+  }
+  return fallback;
+}
 
 function mapSupabaseUserToAuthenticatedUser(supabaseUser: SupabaseUser): AuthenticatedUser {
   const metadata = supabaseUser.user_metadata || {};
@@ -39,6 +59,10 @@ function mapSupabaseUserToAuthenticatedUser(supabaseUser: SupabaseUser): Authent
     name: metadata.name || fallbackName,
     role: metadata.role || 'student',
     hasCompletedOnboarding: Boolean(metadata.hasCompletedOnboarding),
+    aiLanguageLevel: parseBoundedScaleLevel(metadata.aiLanguageLevel, 3),
+    aiDetailLevel: parseBoundedScaleLevel(metadata.aiDetailLevel, 3),
+    highContrast: Boolean(metadata.highContrast),
+    avatarUrl: typeof metadata.avatarUrl === 'string' ? metadata.avatarUrl : undefined,
   };
 }
 
@@ -58,7 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (sessionError) {
           console.error('Erro ao recuperar sessão de autenticação no Supabase:', sessionError);
         }
-
         if (session?.user) {
           setUser(mapSupabaseUserToAuthenticatedUser(session.user));
         }
@@ -79,7 +102,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
         return;
       }
-
       setUser(mapSupabaseUserToAuthenticatedUser(session.user));
       setLoading(false);
     });
@@ -103,16 +125,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (updates: UserProfileUpdates): Promise<boolean> => {
+    if (!user) return false;
+
+    setUser((previousUser) => (previousUser ? { ...previousUser, ...updates } : null));
+
+    try {
+      const { error } = await supabase.auth.updateUser({ data: updates });
+      if (error) {
+        console.error('Erro ao atualizar perfil do usuário no Supabase:', error.message);
+        return false;
+      }
+      return true;
+    } catch (unexpectedError) {
+      console.error('Falha inesperada ao atualizar perfil do usuário:', unexpectedError);
+      return false;
+    }
+  };
+
   const completeOnboarding = async (): Promise<void> => {
     if (!user) return;
-
     setUser({ ...user, hasCompletedOnboarding: true });
 
     try {
       const { error } = await supabase.auth.updateUser({
         data: { hasCompletedOnboarding: true },
       });
-
       if (error) {
         console.error('Erro ao atualizar status de onboarding no Supabase:', error.message);
       }
@@ -122,7 +160,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout, completeOnboarding }}>
+    <AuthContext.Provider
+      value={{ user, loading, setUser, logout, completeOnboarding, updateUserProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

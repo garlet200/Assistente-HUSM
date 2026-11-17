@@ -231,10 +231,16 @@ export class AIOrchestrator {
       pmidCitations = citationList;
     }
 
+    const resolvedSystemInstruction =
+      request.role === 'MODEL_ROLE_CLINICAL_REASONING'
+        ? buildAssistenteHusmSystemInstruction(request.aiLanguageLevel, request.aiDetailLevel)
+        : request.systemInstruction ||
+          buildAssistenteHusmSystemInstruction(request.aiLanguageLevel, request.aiDetailLevel);
+
     const safeRequest: AIRequest = {
       ...request,
       prompt: sanitizedPrompt + pubmedContext,
-      systemInstruction: request.systemInstruction || buildAssistenteHusmSystemInstruction(),
+      systemInstruction: resolvedSystemInstruction,
     };
 
     const globalTimeoutOverride = resolveCascadeTimeoutOverrideMs();

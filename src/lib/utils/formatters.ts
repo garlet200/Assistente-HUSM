@@ -43,3 +43,19 @@ export function isRetryableResponse(text: string | null | undefined): boolean {
 
   return RETRYABLE_ERROR_SUBSTRINGS.some((pattern) => text.includes(pattern));
 }
+
+/**
+ * Masks an e-mail address for privacy display (e.g. "lucas@ufsm.br" -> "lu***s@ufsm.br").
+ */
+export function maskEmailAddress(email?: string): string {
+  if (!email || !email.includes('@')) {
+    return 'E-mail não informado';
+  }
+
+  const [localPart, domainPart] = email.split('@');
+  if (localPart.length <= 2) {
+    return `${localPart[0] || '*'}***@${domainPart}`;
+  }
+
+  return `${localPart.slice(0, 2)}***${localPart.slice(-1)}@${domainPart}`;
+}

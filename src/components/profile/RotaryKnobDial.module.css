@@ -1,0 +1,143 @@
+.dialWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-sm);
+  border-radius: var(--radius-radius-medium);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddimmer);
+}
+
+.dialTitle {
+  margin: 0;
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-caption);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-text-textdark);
+  text-align: center;
+}
+
+.dialStage {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tickButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  margin-left: -7px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tickDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-boxshadow-boxshadowfxdark);
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.tickDotActive {
+  background-color: var(--color-semantic-accent-accentprimary);
+  transform: scale(1.25);
+}
+
+.recessedWell {
+  width: 90px;
+  height: 90px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  box-shadow: var(--shadow-inset-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.knobDisc {
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  box-shadow: var(--shadow-extruded-medium);
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+
+.knobRotor {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transition: transform 90ms ease-out;
+  pointer-events: none;
+}
+
+.knobDisc:active {
+  cursor: grabbing;
+}
+
+.knobDisc:focus-visible {
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 3px;
+}
+
+.indicatorDot {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: var(--radius-radius-full);
+  background-color: var(--color-semantic-accent-accentprimary);
+  box-shadow: 0 0 8px var(--color-semantic-accent-accentsecondary);
+}
+
+.extremesRow {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-xs, 4px);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: 11px;
+  color: var(--color-semantic-text-textlight);
+}
+
+.extremeLeft {
+  text-align: left;
+  max-width: 48%;
+}
+
+.extremeRight {
+  text-align: right;
+  max-width: 48%;
+}
+
+.valueBadge {
+  padding: var(--spacing-min) var(--spacing-sm);
+  border-radius: var(--radius-radius-small);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
+  font-family: var(--typography-fontfamilies-mainsans), sans-serif;
+  font-size: var(--typography-fontsizes-caption);
+  font-weight: var(--typography-fontweights-semibold);
+  color: var(--color-semantic-accent-accentprimary);
+  text-align: center;
+  width: 100%;
+}

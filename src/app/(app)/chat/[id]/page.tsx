@@ -3,7 +3,7 @@
 /**
  * @file page.tsx
  * @description Tela de sessão ativa do Assistente de Raciocínio Clínico (/chat/[id]),
- * conectando o hook useChatSession aos cards de interação, cabeçalho editável e barra de envio.
+ * conectando o hook useChatSession aos cards de interação, cabeçalho com popup e barra de envio.
  */
 
 import React, { use } from 'react';
@@ -33,6 +33,8 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
     handleTitleCommit,
     handleSend,
     handleRetryInteraction,
+    handleDeleteCurrentSession,
+    handleExportCurrentSessionPdf,
   } = useChatSession(routeChatId);
 
   if (!user) {
@@ -95,6 +97,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       <ChatInteractionCard
         key={interaction.id}
         interaction={interaction}
+        sessionTitle={chatTitle}
         onSendSuggestion={handleSend}
         onRetry={handleRetryInteraction}
       />
@@ -107,8 +110,10 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
         title={chatTitle}
         onTitleChange={setChatTitle}
         onTitleCommit={handleTitleCommit}
+        onExportSessionPdf={handleExportCurrentSessionPdf}
+        onDeleteSession={handleDeleteCurrentSession}
         placeholder="Nome do Caso..."
-        editButtonTitle="Editar Nome do Caso"
+        editButtonTitle="Opções do Caso"
       />
 
       <div

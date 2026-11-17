@@ -32,6 +32,7 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
     handleStartStudy,
     handleAnswerSelect,
     handleRetryInteraction,
+    handleDeleteCurrentStudySession,
   } = useStudySession(routeSessionId);
 
   if (!user) {
@@ -69,8 +70,9 @@ export default function StudyChat({ params }: { params: Promise<{ id: string }> 
         title={sessionTitle}
         onTitleChange={setSessionTitle}
         onTitleCommit={handleTitleCommit}
+        onDeleteSession={handleDeleteCurrentStudySession}
         placeholder="Nome da Sessão..."
-        editButtonTitle="Editar Título"
+        editButtonTitle="Opções da Sessão"
         containerStyle={{
           gap: 'var(--spacing-md)',
           padding: 'var(--spacing-md) var(--spacing-lg) 0 var(--spacing-lg)',

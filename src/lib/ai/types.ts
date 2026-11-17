@@ -24,6 +24,8 @@ export interface AIRequest {
   systemInstruction?: string;
   history?: AIRequestHistoryMessage[];
   responseFormat?: 'text' | 'json';
+  aiLanguageLevel?: number;
+  aiDetailLevel?: number;
 }
 
 export interface AIResponse {
