@@ -45,6 +45,11 @@ const SUGGESTION_BUTTON_STYLE: React.CSSProperties = {
   color: 'var(--color-semantic-accent-accentprimary)',
   cursor: 'pointer',
   display: 'inline-block',
+  maxWidth: '100%',
+  boxSizing: 'border-box',
+  whiteSpace: 'normal',
+  overflowWrap: 'anywhere',
+  wordBreak: 'break-word',
   fontSize: '0.875rem',
   fontFamily: 'var(--typography-fontfamilies-mainsans)',
   textAlign: 'left',
@@ -56,6 +61,14 @@ const DIVIDER_STYLE: React.CSSProperties = {
   margin: 'var(--spacing-ml) 0',
 };
 
+function decodeSuggestionLabel(rawText: string): string {
+  try {
+    return decodeURIComponent(rawText).trim();
+  } catch {
+    return rawText.replace(/%20/g, ' ').trim();
+  }
+}
+
 function extractSuggestionsAndMainContent(rawResponseText: string): {
   mainContentText: string;
   suggestionTopics: string[];
@@ -65,8 +78,8 @@ function extractSuggestionsAndMainContent(rawResponseText: string): {
   let regexMatch: RegExpExecArray | null;
 
   while ((regexMatch = suggestionRegex.exec(rawResponseText)) !== null) {
-    const rawSuggestion = regexMatch[1].trim();
-    if (rawSuggestion) suggestionTopics.push(rawSuggestion);
+    const decodedSuggestion = decodeSuggestionLabel(regexMatch[1]);
+    if (decodedSuggestion) suggestionTopics.push(decodedSuggestion);
   }
 
   return {

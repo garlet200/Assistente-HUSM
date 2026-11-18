@@ -1,7 +1,7 @@
 /**
  * @file analytics.ts
  * @description Telemetria estruturada, classificação diagnóstica de falhas HTTP/Timeout e
- * resposta de contingência final quando todos os 3 níveis da cascata de IA se esgotam.
+ * resposta de contingência final quando todos os níveis da cascata de IA se esgotam.
  */
 
 import { ModelTier } from './cascadeConfig';
@@ -89,7 +89,7 @@ export function logFallbackEvent(fallbackEvent: FallbackLogEntry): void {
 }
 
 /**
- * Builds the standardized fallback response when all 3 cascade models fail.
+ * Builds the standardized fallback response when all cascade models fail.
  */
 export function createAllModelsFailedResponse(
   isJsonFormat: boolean,

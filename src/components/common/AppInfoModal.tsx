@@ -10,7 +10,7 @@ import React, { useEffect } from 'react';
 import { Info, X, ShieldAlert, Layers } from 'lucide-react';
 import { ReliabilityBadge } from '@/components/chat/ReliabilityBadge';
 import { Button } from '@/components/ui/Button';
-import { ModelTier, ReliabilityLevel } from '@/lib/ai/cascadeConfig';
+import { CASCADE_CONFIG } from '@/lib/ai/cascadeConfig';
 import { MANDATORY_CLINICAL_DISCLAIMER } from '@/lib/ai/prompts';
 import { ETHICAL_GUIDELINE_ITEMS } from '@/lib/constants/session';
 import styles from './AppInfoModal.module.css';
@@ -19,34 +19,6 @@ interface AppInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-interface CascadeTierDescriptor {
-  title: string;
-  description: string;
-  reliability?: ReliabilityLevel;
-  modelTier?: ModelTier;
-}
-
-const CASCADE_TIER_DESCRIPTORS: readonly CascadeTierDescriptor[] = [
-  {
-    title: 'Modelo Principal: Gemini 3.8 Flash',
-    description: 'Prioridade máxima e alta capacidade analítica. Responde a todas as consultas normais.',
-  },
-  {
-    title: 'Fallback 1: Gemini 3.5 Flash-Lite',
-    description:
-      'Acionado caso o modelo principal sofra lentidão (> 50s) ou indisponibilidade temporária. Alta disponibilidade com resposta ágil.',
-    reliability: 'standard',
-    modelTier: 'fallback_1',
-  },
-  {
-    title: 'Fallback 2: Gemini 3 Flash Preview',
-    description:
-      'Rede de segurança adicional de alta estabilidade para períodos de pico ou alta demanda global.',
-    reliability: 'reduced',
-    modelTier: 'fallback_2',
-  },
-];
 
 function ModalHeader({ onClose }: { onClose: () => void }) {
   return (
@@ -114,25 +86,28 @@ function CascadeReliabilitySection() {
       </div>
 
       <p style={{ margin: 0, color: 'var(--color-semantic-text-textdark)' }}>
-        Para garantir alta disponibilidade sem interrupções, o app opera com 3 modelos em cascata
-        automática:
+        Para garantir alta disponibilidade sem interrupções, o app opera com {CASCADE_CONFIG.length}{' '}
+        modelos em cascata automática:
       </p>
 
       <div className={styles.tiersList}>
-        {CASCADE_TIER_DESCRIPTORS.map((tierItem) => (
-          <div key={tierItem.title} className={styles.tierCard}>
+        {CASCADE_CONFIG.map((tierConfig) => (
+          <div key={tierConfig.tier} className={styles.tierCard}>
             <div className={styles.tierCardHeader}>
-              <span className={styles.tierTitle}>{tierItem.title}</span>
-              {tierItem.reliability && tierItem.modelTier ? (
+              <span className={styles.tierTitle}>
+                {tierConfig.badgeLabel}: {tierConfig.displayName}
+              </span>
+              {tierConfig.reliability.badgeVisible ? (
                 <ReliabilityBadge
-                  reliability={tierItem.reliability}
-                  modelTier={tierItem.modelTier}
+                  reliability={tierConfig.reliability.level}
+                  modelTier={tierConfig.tier}
+                  modelDisplayName={tierConfig.displayName}
                 />
               ) : (
                 <span className={styles.noBadgeNote}>(Sem badge no balão)</span>
               )}
             </div>
-            <p className={styles.tierDescription}>{tierItem.description}</p>
+            <p className={styles.tierDescription}>{tierConfig.description}</p>
           </div>
         ))}
       </div>

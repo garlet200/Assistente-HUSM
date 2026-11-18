@@ -21,11 +21,13 @@ export interface AIRequestHistoryMessage {
 export interface AIRequest {
   prompt: string;
   role: ModelRole;
+  userId?: string;
   systemInstruction?: string;
   history?: AIRequestHistoryMessage[];
   responseFormat?: 'text' | 'json';
   aiLanguageLevel?: number;
   aiDetailLevel?: number;
+  abortSignal?: AbortSignal;
 }
 
 export interface AIResponse {

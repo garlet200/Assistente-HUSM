@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/client';
 import {
   buildStudyConversationHistory,
+  buildStudyModelReplyPayload,
   DatabaseMessageRow,
   deleteMessageByIdSilently,
   deleteSessionFromDatabase,
@@ -61,50 +62,19 @@ export function useStudySession(routeSessionId: string) {
     await updateSessionTitleInDatabase(supabase, routeSessionId, trimmedTitle);
   };
 
-  const requestAndPersistStudyStep = async (stepParams: {
-    prompt: string;
-    systemInstruction: string;
-    history?: AIRequestHistoryMessage[];
-    replaceAllMessages?: boolean;
-  }): Promise<void> => {
-    const gatewayResult = await postRequestToAiGateway({
-      prompt: stepParams.prompt,
-      role: 'MODEL_ROLE_EDUCATIONAL',
-      history: stepParams.history,
-      responseFormat: 'json',
-      systemInstruction: stepParams.systemInstruction,
-    });
-
-    const parsedAiPayload: EducationalSimulationJsonPayload = JSON.parse(gatewayResult.text);
-    const temporaryMessageId = crypto.randomUUID();
-    const generatedStudyMessage: StudyMessage = {
-      id: temporaryMessageId,
-      role: 'model',
-      content: parsedAiPayload.content,
-      isMCQ: parsedAiPayload.isMCQ,
-      options: parsedAiPayload.options,
-      answered: false,
-      reliability: gatewayResult.reliability,
-      modelTier: gatewayResult.modelTier,
-    };
-
-    setMessages((prev) =>
-      stepParams.replaceAllMessages ? [generatedStudyMessage] : [...prev, generatedStudyMessage]
-    );
+  const persistStudyModelReplyInBackground = async (
+    temporaryMessageId: string,
+    content: string,
+    metadata: Record<string, unknown>,
+    precedingDbPromise?: Promise<unknown>
+  ): Promise<void> => {
+    if (precedingDbPromise) await precedingDbPromise;
 
     const persistedRecord = await insertSessionMessageRecord(supabase, {
       sessionId: routeSessionId,
       role: 'model',
-      content: parsedAiPayload.content,
-      metadata: {
-        isMCQ: parsedAiPayload.isMCQ,
-        options: parsedAiPayload.options,
-        answered: false,
-        reliability: gatewayResult.reliability,
-        modelTier: gatewayResult.modelTier,
-        modelId: gatewayResult.modelId,
-        displayName: gatewayResult.displayName,
-      },
+      content,
+      metadata,
     });
 
     if (persistedRecord) {
@@ -112,6 +82,43 @@ export function useStudySession(routeSessionId: string) {
         prev.map((msg) => (msg.id === temporaryMessageId ? { ...msg, id: persistedRecord.id } : msg))
       );
     }
+  };
+
+  const requestAndPersistStudyStep = async (stepParams: {
+    prompt: string;
+    systemInstruction: string;
+    history?: AIRequestHistoryMessage[];
+    replaceAllMessages?: boolean;
+    precedingDbPromise?: Promise<unknown>;
+  }): Promise<void> => {
+    const gatewayResult = await postRequestToAiGateway({
+      prompt: stepParams.prompt,
+      role: 'MODEL_ROLE_EDUCATIONAL',
+      userId: user?.id,
+      history: stepParams.history,
+      responseFormat: 'json',
+      systemInstruction: stepParams.systemInstruction,
+    });
+
+    const parsedAiPayload: EducationalSimulationJsonPayload = JSON.parse(gatewayResult.text);
+    const temporaryMessageId = crypto.randomUUID();
+    const { message: generatedStudyMessage, metadata } = buildStudyModelReplyPayload(
+      temporaryMessageId,
+      parsedAiPayload,
+      gatewayResult
+    );
+
+    setMessages((prev) =>
+      stepParams.replaceAllMessages ? [generatedStudyMessage] : [...prev, generatedStudyMessage]
+    );
+    setIsLoadingAiResponse(false);
+
+    void persistStudyModelReplyInBackground(
+      temporaryMessageId,
+      parsedAiPayload.content,
+      metadata,
+      stepParams.precedingDbPromise
+    );
   };
 
   const appendUnavailableErrorMessage = (): void => {
@@ -125,13 +132,14 @@ export function useStudySession(routeSessionId: string) {
   const handleStartStudy = async (topicToStudy: string): Promise<void> => {
     setSelectedTopic(topicToStudy);
     setHasSelectedTopic(true);
-    if (routeSessionId !== 'new' && sessionTitle === DEFAULT_SESSION_TITLES.NEW_STUDY) {
-      await handleTitleCommit(`Estudo: ${topicToStudy}`);
-    }
     setMessages([]);
     setIsLoadingAiResponse(true);
 
-    await insertSessionMessageRecord(supabase, {
+    const titleUpdatePromise =
+      routeSessionId !== 'new' && sessionTitle === DEFAULT_SESSION_TITLES.NEW_STUDY
+        ? handleTitleCommit(`Estudo: ${topicToStudy}`)
+        : Promise.resolve();
+    const userTopicPromise = insertSessionMessageRecord(supabase, {
       sessionId: routeSessionId,
       role: 'user',
       content: `${STUDY_TOPIC_PROMPT_PREFIX}${topicToStudy}`,
@@ -142,6 +150,7 @@ export function useStudySession(routeSessionId: string) {
         prompt: buildInitialCaseUserPrompt(topicToStudy),
         systemInstruction: buildInitialCaseSystemInstruction(),
         replaceAllMessages: true,
+        precedingDbPromise: Promise.all([titleUpdatePromise, userTopicPromise]),
       });
     } catch (studySimulationError) {
       console.error('Erro na simulação clínica:', studySimulationError);
@@ -193,21 +202,37 @@ export function useStudySession(routeSessionId: string) {
   }, [messages, isLoadingAiResponse]);
 
   const handleAnswerSelect = async (questionMessageId: string, chosenOptionText: string): Promise<void> => {
-    setMessages((prev) => prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg)));
+    const studyHistory = buildStudyConversationHistory(messages);
     const targetQuestion = messages.find((msg) => msg.id === questionMessageId);
-    if (targetQuestion) {
-      await updateMessageMetadataInDatabase(supabase, routeSessionId, questionMessageId, { ...targetQuestion, answered: true });
-    }
+    const temporaryUserAnswerId = crypto.randomUUID();
 
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: 'user', content: chosenOptionText }]);
-    await insertSessionMessageRecord(supabase, { sessionId: routeSessionId, role: 'user', content: chosenOptionText });
+    setMessages((prev) => [
+      ...prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg)),
+      { id: temporaryUserAnswerId, role: 'user', content: chosenOptionText },
+    ]);
     setIsLoadingAiResponse(true);
+
+    const metadataUpdatePromise = targetQuestion
+      ? updateMessageMetadataInDatabase(supabase, routeSessionId, questionMessageId, { ...targetQuestion, answered: true })
+      : Promise.resolve();
+
+    const userAnswerPromise = insertSessionMessageRecord(supabase, {
+      sessionId: routeSessionId,
+      role: 'user',
+      content: chosenOptionText,
+    }).then((persisted) => {
+      if (persisted) {
+        setMessages((prev) => prev.map((m) => (m.id === temporaryUserAnswerId ? { ...m, id: persisted.id } : m)));
+      }
+      return persisted;
+    });
 
     try {
       await requestAndPersistStudyStep({
         prompt: buildAnswerEvaluationUserPrompt(chosenOptionText),
         systemInstruction: buildAnswerEvaluationSystemInstruction(),
-        history: buildStudyConversationHistory(messages),
+        history: studyHistory,
+        precedingDbPromise: Promise.all([metadataUpdatePromise, userAnswerPromise]),
       });
     } catch (evaluationError) {
       console.error('Erro ao avaliar resposta:', evaluationError);

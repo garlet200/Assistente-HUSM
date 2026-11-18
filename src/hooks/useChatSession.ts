@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import {
   buildChatPreviewTitle,
   buildConversationHistory,
+  buildModelReplyMetadata,
   deleteMessageByIdSilently,
   deleteSessionFromDatabase,
   fetchSessionTitleAndMessages,
@@ -133,48 +134,62 @@ export function useChatSession(routeChatId: string) {
     return createdChat.id;
   };
 
+  const persistChatReplyInBackground = async (
+    sessionId: string,
+    temporaryInteractionId: string,
+    userMessagePromise: Promise<{ id: string } | null>,
+    gatewayResult: Awaited<ReturnType<typeof postRequestToAiGateway>>
+  ): Promise<void> => {
+    const persistedUserMessage = await userMessagePromise;
+    const [persistedModelMessage] = await Promise.all([
+      insertSessionMessageRecord(supabase, {
+        sessionId,
+        role: 'model',
+        content: gatewayResult.text,
+        citations: gatewayResult.citations || [],
+        metadata: buildModelReplyMetadata(gatewayResult),
+      }),
+      touchSessionUpdatedAtInDatabase(supabase, sessionId),
+    ]);
+
+    if (!persistedModelMessage) return;
+    updateTargetInteractionInState(temporaryInteractionId, persistedUserMessage?.id, (item) => ({
+      ...item,
+      modelMessageId: persistedModelMessage.id,
+    }));
+  };
+
   const requestGatewayAndPersistReply = async (requestParams: {
     sessionId: string;
     promptToSend: string;
     history: AIRequestHistoryMessage[];
     temporaryInteractionId: string;
-    persistedUserMessageId?: string;
+    userMessagePromise: Promise<{ id: string } | null>;
   }): Promise<void> => {
     const gatewayResult = await postRequestToAiGateway({
       prompt: requestParams.promptToSend,
       role: 'MODEL_ROLE_CLINICAL_REASONING',
+      userId: user?.id,
       history: requestParams.history,
       aiLanguageLevel: user?.aiLanguageLevel,
       aiDetailLevel: user?.aiDetailLevel,
     });
 
-    const persistedModelMessage = await insertSessionMessageRecord(supabase, {
-      sessionId: requestParams.sessionId,
-      role: 'model',
-      content: gatewayResult.text,
-      citations: gatewayResult.citations || [],
-      metadata: {
-        reliability: gatewayResult.reliability,
-        modelTier: gatewayResult.modelTier,
-        modelId: gatewayResult.modelId,
-        displayName: gatewayResult.displayName,
-      },
-    });
+    updateTargetInteractionInState(requestParams.temporaryInteractionId, undefined, (item) => ({
+      ...item,
+      response: gatewayResult.text,
+      citations: gatewayResult.citations,
+      reliability: gatewayResult.reliability,
+      modelTier: gatewayResult.modelTier,
+      modelDisplayName: gatewayResult.displayName,
+    }));
+    setIsLoadingResponse(false);
 
-    await touchSessionUpdatedAtInDatabase(supabase, requestParams.sessionId);
-
-    updateTargetInteractionInState(
+    void persistChatReplyInBackground(
+      requestParams.sessionId,
       requestParams.temporaryInteractionId,
-      requestParams.persistedUserMessageId,
-      (interaction) => ({
-        ...interaction,
-        response: gatewayResult.text,
-        citations: gatewayResult.citations,
-        modelMessageId: persistedModelMessage?.id,
-        reliability: gatewayResult.reliability,
-        modelTier: gatewayResult.modelTier,
-        modelDisplayName: gatewayResult.displayName,
-      })
+      requestParams.userMessagePromise,
+      gatewayResult
     );
   };
 
@@ -183,11 +198,11 @@ export function useChatSession(routeChatId: string) {
     if (!promptToSend.trim() || isLoadingResponse || !user) return;
 
     const temporaryInteractionId = crypto.randomUUID();
+    const conversationHistory = buildConversationHistory(interactions);
     setInteractions((prev) => [
       ...prev,
       { id: temporaryInteractionId, prompt: promptToSend, response: null, timestamp: new Date() },
     ]);
-
     if (typeof overridePromptText !== 'string') setInputPrompt('');
     setIsLoadingResponse(true);
     setTimeout(() => endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' }), AUTO_SCROLL_DELAY_MS);
@@ -198,30 +213,31 @@ export function useChatSession(routeChatId: string) {
       return;
     }
 
-    const persistedUserMessage = await insertSessionMessageRecord(supabase, {
+    const userMessagePromise = insertSessionMessageRecord(supabase, {
       sessionId: resolvedChatSessionId,
       role: 'user',
       content: promptToSend,
+    }).then((persistedUserMessage) => {
+      if (persistedUserMessage) {
+        updateTargetInteractionInState(temporaryInteractionId, undefined, (item) => ({
+          ...item,
+          userMessageId: persistedUserMessage.id,
+        }));
+      }
+      return persistedUserMessage;
     });
-
-    if (persistedUserMessage) {
-      updateTargetInteractionInState(temporaryInteractionId, undefined, (item) => ({
-        ...item,
-        userMessageId: persistedUserMessage.id,
-      }));
-    }
 
     try {
       await requestGatewayAndPersistReply({
         sessionId: resolvedChatSessionId,
         promptToSend,
-        history: buildConversationHistory(interactions),
+        history: conversationHistory,
         temporaryInteractionId,
-        persistedUserMessageId: persistedUserMessage?.id,
+        userMessagePromise,
       });
     } catch (gatewayError) {
       console.error('Erro na chamada do Gateway:', gatewayError);
-      updateTargetInteractionInState(temporaryInteractionId, persistedUserMessage?.id, (item) => ({
+      updateTargetInteractionInState(temporaryInteractionId, undefined, (item) => ({
         ...item,
         response: ASSISTANT_UNAVAILABLE_MESSAGE,
       }));

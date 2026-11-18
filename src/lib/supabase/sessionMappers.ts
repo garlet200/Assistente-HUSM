@@ -7,7 +7,9 @@
 import { Interaction } from '@/components/chat/ChatInteractionCard';
 import { StudyMessage } from '@/components/study/StudySimulationCard';
 import { ModelTier, ReliabilityLevel } from '@/lib/ai/cascadeConfig';
-import { AIRequestHistoryMessage } from '@/lib/ai/types';
+import { limitConversationHistory } from '@/lib/ai/rateLimiter';
+import { AIRequestHistoryMessage, AIResponse } from '@/lib/ai/types';
+import { EducationalSimulationJsonPayload } from '@/lib/ai/prompts';
 import { CHAT_TITLE_MAX_PREVIEW_LENGTH } from '@/lib/constants/session';
 import { ExportableCardItem } from '@/lib/utils/exporters';
 
@@ -74,25 +76,29 @@ export function groupMessagesIntoInteractions(rawMessages: DatabaseMessageRow[])
   return groupedInteractions;
 }
 
-/** Builds standard conversation history for LLM context from existing UI interactions. */
+/** Builds bounded conversation history for LLM context from existing UI interactions. */
 export function buildConversationHistory(interactions: Interaction[]): AIRequestHistoryMessage[] {
-  return interactions.flatMap((interaction): AIRequestHistoryMessage[] => [
+  const fullHistory = interactions.flatMap((interaction): AIRequestHistoryMessage[] => [
     { role: 'user', content: interaction.prompt },
     ...(interaction.response ? [{ role: 'model' as const, content: interaction.response }] : []),
   ]);
+
+  return limitConversationHistory(fullHistory, 'MODEL_ROLE_CLINICAL_REASONING');
 }
 
-/** Builds linear message history including MCQ choices for study simulator continuity. */
+/** Builds bounded linear message history including MCQ choices for study simulator continuity. */
 export function buildStudyConversationHistory(
   messagesList: StudyMessage[]
 ): AIRequestHistoryMessage[] {
-  return messagesList.map((studyMessage): AIRequestHistoryMessage => {
+  const fullHistory = messagesList.map((studyMessage): AIRequestHistoryMessage => {
     const formattedContent = studyMessage.isMCQ
       ? `${studyMessage.content}\nOpções: ${studyMessage.options?.join(' | ')}`
       : studyMessage.content;
 
     return { role: studyMessage.role, content: formattedContent };
   });
+
+  return limitConversationHistory(fullHistory, 'MODEL_ROLE_EDUCATIONAL');
 }
 
 /** Maps a raw database message row into a typed StudyMessage object. */
@@ -106,6 +112,42 @@ export function mapDatabaseRowToStudyMessage(messageRecord: DatabaseMessageRow):
     answered: messageRecord.metadata?.answered,
     reliability: messageRecord.metadata?.reliability,
     modelTier: messageRecord.metadata?.modelTier,
+  };
+}
+
+/** Builds common persistence metadata fields from an AIResponse payload. */
+export function buildModelReplyMetadata(gatewayResult: AIResponse): Record<string, unknown> {
+  return {
+    reliability: gatewayResult.reliability,
+    modelTier: gatewayResult.modelTier,
+    modelId: gatewayResult.modelId,
+    displayName: gatewayResult.displayName,
+  };
+}
+
+/** Builds a StudyMessage model item and its persistence metadata from a parsed JSON simulation payload. */
+export function buildStudyModelReplyPayload(
+  temporaryId: string,
+  parsedAiPayload: EducationalSimulationJsonPayload,
+  gatewayResult: AIResponse
+): { message: StudyMessage; metadata: Record<string, unknown> } {
+  return {
+    message: {
+      id: temporaryId,
+      role: 'model',
+      content: parsedAiPayload.content,
+      isMCQ: parsedAiPayload.isMCQ,
+      options: parsedAiPayload.options,
+      answered: false,
+      reliability: gatewayResult.reliability,
+      modelTier: gatewayResult.modelTier,
+    },
+    metadata: {
+      isMCQ: parsedAiPayload.isMCQ,
+      options: parsedAiPayload.options,
+      answered: false,
+      ...buildModelReplyMetadata(gatewayResult),
+    },
   };
 }
 

@@ -42,7 +42,9 @@ export class GeminiProvider implements AIProvider {
           })),
         });
 
-        const chatResult = await chatSession.sendMessage(request.prompt);
+        const chatResult = await chatSession.sendMessage(request.prompt, {
+          signal: request.abortSignal,
+        });
         return {
           text: chatResult.response.text(),
           providerId: this.id,
@@ -51,7 +53,9 @@ export class GeminiProvider implements AIProvider {
         };
       }
 
-      const singlePromptResult = await model.generateContent(request.prompt);
+      const singlePromptResult = await model.generateContent(request.prompt, {
+        signal: request.abortSignal,
+      });
       return {
         text: singlePromptResult.response.text(),
         providerId: this.id,
