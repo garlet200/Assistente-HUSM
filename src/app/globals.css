@@ -88,7 +88,6 @@ body {
   /* Restrict max width for mobile/default; expanded on desktop (>= 1024px) */
   max-width: 480px;
   margin: 0 auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.05);
 }
 
 body:has([data-app-shell="true"]) {
@@ -99,13 +98,12 @@ body:has([data-app-shell="true"]) {
 @media (min-width: 1024px) {
   body {
     max-width: none;
-    box-shadow: none;
   }
 }
 
-/* Ensure html also has the background color so the sides aren't white */
+/* Ensure html shares the default neumorphic background across the full viewport */
 html {
-  background-color: var(--color-semantic-backgroundcolor-backgrounddimmer, #f0f0f0);
+  background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   overflow-x: hidden;
 }
 
@@ -197,6 +195,18 @@ input:focus-visible {
 
 .workspace-page {
   padding: var(--spacing-lg);
+}
+
+.auth-page-container {
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  flex: 1;
+  justify-content: center;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 @media (max-width: 768px) {

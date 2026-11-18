@@ -16,7 +16,9 @@ Documento de referência arquitetural para leitura e manutenção humana do proj
 2. **`src/components/` (Componentes React em `PascalCase.tsx`):**
    * `ui/`: Primitivos atômicos do Design System Neumórfico (`Button.tsx`, `Card.tsx`, `Input.tsx`).
    * `layout/`: Shell da aplicação, barras de navegação e provedores globais (`TopBar.tsx`, `BottomNav.tsx`, `Providers.tsx`).
-   * `common/`: Componentes compartilhados entre múltiplos módulos (`AppInfoModal.tsx`, `EditableSessionHeader.tsx`, `RetryActionButton.tsx`, `SessionHistoryList.tsx`).
+   * `common/`: Componentes compartilhados entre múltiplos módulos (`AppInfoModal.tsx`, `EditableSessionHeader.tsx`, `RetryActionButton.tsx`, `SessionHistoryList.tsx`, `UserRoleSelector.tsx`).
+   * `auth/`: Componentes do fluxo de entrada, cadastro e validação de senha (`AuthCardForm.tsx`, `PasswordCriteriaChecklist.tsx`).
+   * `profile/`: Painel modular de configurações do usuário, preferências de IA e atualização de senha (`ProfileSettingsPanel.tsx`, `PasswordUpdateCard.tsx`).
    * `chat/`: Componentes específicos do Assistente de Raciocínio Clínico (`ChatInteractionCard.tsx`, `ChatCitationList.tsx`, `ReliabilityBadge.tsx`).
    * `study/`: Componentes específicos do Simulador de Casos Clínicos (`StudySimulationCard.tsx`, `StudyTopicSelector.tsx`, `MultipleChoiceQuestion.tsx`).
 3. **`src/hooks/` (Custom Hooks em `camelCase` com prefixo `use`):** Encapsulam o estado da interface e o ciclo de vida das sessões (`useChatSession.ts`, `useStudySession.ts`).
@@ -33,6 +35,8 @@ src/
 │   │   ├── chat/
 │   │   │   ├── [id]/page.tsx                 # Tela de consulta ativa do Chat Clínico (/chat/[id] ou /chat/new)
 │   │   │   └── page.tsx                      # Hub de Histórico Clínico (/chat)
+│   │   ├── profile/
+│   │   │   └── page.tsx                      # Tela de Configurações de Perfil e Segurança (/profile)
 │   │   ├── study/
 │   │   │   ├── [id]/page.tsx                 # Tela ativa do Simulador de Casos Clínicos (/study/[id])
 │   │   │   └── page.tsx                      # Hub de Sessões de Estudo (/study)
@@ -45,9 +49,14 @@ src/
 │   ├── design-tokens.css                     # Tokens atômicos e semânticos de cores, tipografia e sombras
 │   ├── globals.css                           # Estilos globais, classes neumórficas (.neu-*) e reset
 │   ├── layout.tsx                            # Root Layout (Fontes IBM Plex, PWA manifest, Clarity e Providers)
-│   └── page.tsx                              # Tela de Login/Cadastro e aceite das Diretrizes Éticas (Onboarding)
+│   ├── page.tsx                              # Tela de Login/Cadastro/Recuperação e Onboarding Ético
+│   └── reset-password/
+│       └── page.tsx                          # Redefinição de senha via token_hash (OTP) ou code (PKCE)
 │
 ├── components/                               # Camada de Apresentação (React Components)
+│   ├── auth/
+│   │   ├── AuthCardForm.tsx                  # Formulário modular de Login, Cadastro e Recuperação de Senha
+│   │   └── PasswordCriteriaChecklist.tsx     # Checklist em tempo real dos requisitos de senha forte
 │   ├── chat/
 │   │   ├── ChatCitationList.tsx              # Pílulas clicáveis de artigos científicos do PubMed (PMID)
 │   │   ├── ChatInteractionCard.tsx           # Card pergunta + resposta Markdown + sugestões + retry
@@ -57,11 +66,16 @@ src/
 │   │   ├── AppInfoModal.tsx                  # Modal institucional ("Sobre o MedHUSM", ética e cascata IA)
 │   │   ├── EditableSessionHeader.tsx         # Barra de título editável inline para Chat e Estudo
 │   │   ├── RetryActionButton.tsx             # Botão compartilhado "Tentar novamente" para falhas de IA
-│   │   └── SessionHistoryList.tsx            # Lista reutilizável de sessões salvas no Supabase
+│   │   ├── SessionHistoryList.tsx            # Lista reutilizável de sessões salvas no Supabase
+│   │   └── UserRoleSelector.tsx              # Seletor reutilizável de perfil ('Estudante' | 'Profissional')
 │   ├── layout/
 │   │   ├── BottomNav.tsx                     # Navegação inferior com retomada de sessão via sessionStorage
 │   │   ├── Providers.tsx                     # Wrapper client-side do AuthProvider
 │   │   └── TopBar.tsx                        # Barra superior com botão Voltar, modal Info e menu do usuário
+│   ├── profile/
+│   │   ├── AiPreferencesControl.tsx          # Controles rotatórios de linguagem e detalhamento da IA
+│   │   ├── PasswordUpdateCard.tsx            # Card modular de alteração/redefinição de senha no Supabase Auth
+│   │   └── ProfileSettingsPanel.tsx          # Painel completo de configurações de conta, IA e logout
 │   ├── study/
 │   │   ├── MultipleChoiceQuestion.module.css # Estilos neumórficos das alternativas de múltipla escolha
 │   │   ├── MultipleChoiceQuestion.tsx        # Componente interativo de questão MCQ (A, B, C, D)
@@ -94,7 +108,8 @@ src/
     │   ├── client.ts                         # Fábrica do cliente Supabase Browser (@supabase/ssr)
     │   └── sessionRepository.ts              # Operações compartilhadas de banco e mapeamento de histórico
     ├── utils/
-    │   └── formatters.ts                     # Formatação de datas pt-BR e detecção de erros passíveis de retry
+    │   ├── authValidation.ts                 # Validação de nome, e-mail, senha forte e sinal de recuperação na URL
+    │   └── formatters.ts                     # Formatação de datas pt-BR, mascaramento de e-mail e retry
     └── auth.tsx                              # Contexto React de autenticação e controle de onboarding
 ```
 
@@ -203,3 +218,4 @@ sequenceDiagram
 | **10. Simulador de Casos Clínicos (Modo Estudo)**<br/>Gera casos clínicos interativos e avalia respostas em formato JSON estrito (`{ content, isMCQ, options }`) com questões de múltipla escolha. | `src/lib/ai/prompts.ts`<br/>`src/hooks/useStudySession.ts`<br/>`src/components/study/MultipleChoiceQuestion.tsx` | `buildInitialCaseSystemInstruction()`, `buildAnswerEvaluationSystemInstruction()`, `requestAndPersistStudyStep()` |
 | **11. Calculadora Determinística CHA₂DS₂-VASc (Zero-LLM)**<br/>Cálculo 100% local e determinístico de risco tromboembólico em fibrilação atrial sem chamadas de IA. | `src/app/(app)/tools/cha2ds2-vasc/page.tsx` | `CRITERIA_DEFINITIONS`, `getClinicalRiskRecommendation()`, `handleCalculateScore()` |
 | **12. Onboarding Ético Obrigatório e Retomada de Abas**<br/>Exige aceite dos termos éticos no primeiro acesso (`hasCompletedOnboarding`) e preserva a sessão ativa ao alternar entre as abas inferiores via `sessionStorage`. | `src/lib/auth.tsx`<br/>`src/app/page.tsx`<br/>`src/components/layout/BottomNav.tsx` | `completeOnboarding()`, `OnboardingTermsView()`, `resolveTabDestinationPath()` |
+| **13. Autenticação, Senha Forte e Recuperação de Conta**<br/>Validação em tempo real de e-mail e senha forte (8+ caracteres, maiúscula, minúscula, número e símbolo), fluxo `/reset-password` via OTP/PKCE e alteração de senha em `/profile`. | `src/lib/utils/authValidation.ts`<br/>`src/components/auth/AuthCardForm.tsx`<br/>`src/app/reset-password/page.tsx`<br/>`src/components/profile/PasswordUpdateCard.tsx` | `evaluatePasswordCriteria()`, `hasRecoveryUrlSignal()`, `resolveRecoverySession()` |

@@ -6,16 +6,24 @@
  * Supabase Auth, gerenciando estado de sessão, perfil, preferências de IA e onboarding ético.
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { SESSION_STORAGE_KEYS } from '@/lib/constants/session';
+import { hasRecoveryUrlSignal } from '@/lib/utils/authValidation';
+
+export type UserRoleOption = 'student' | 'doctor';
+
+const AI_SCALE_MIN_LEVEL = 1;
+const AI_SCALE_MAX_LEVEL = 5;
+const AI_SCALE_DEFAULT_LEVEL = 3;
 
 export interface AuthenticatedUser {
   id: string;
   name: string;
   email?: string;
-  role: 'student' | 'doctor';
+  role: UserRoleOption;
   hasCompletedOnboarding: boolean;
   aiLanguageLevel: number;
   aiDetailLevel: number;
@@ -25,7 +33,7 @@ export interface AuthenticatedUser {
 
 export interface UserProfileUpdates {
   name?: string;
-  role?: 'student' | 'doctor';
+  role?: UserRoleOption;
   aiLanguageLevel?: number;
   aiDetailLevel?: number;
 }
@@ -33,20 +41,26 @@ export interface UserProfileUpdates {
 interface AuthContextType {
   user: AuthenticatedUser | null;
   loading: boolean;
+  isPasswordRecoveryFlow: boolean;
+  clearPasswordRecoveryFlow: () => void;
   setUser: (user: AuthenticatedUser | null) => void;
   logout: () => Promise<void>;
-  completeOnboarding: () => void;
+  completeOnboarding: () => Promise<void>;
   updateUserProfile: (updates: UserProfileUpdates) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function parseBoundedScaleLevel(rawValue: unknown, fallback = 3): number {
+function parseBoundedScaleLevel(rawValue: unknown, fallbackLevel = AI_SCALE_DEFAULT_LEVEL): number {
   const numericValue = Number(rawValue);
-  if (Number.isInteger(numericValue) && numericValue >= 1 && numericValue <= 5) {
+  if (
+    Number.isInteger(numericValue) &&
+    numericValue >= AI_SCALE_MIN_LEVEL &&
+    numericValue <= AI_SCALE_MAX_LEVEL
+  ) {
     return numericValue;
   }
-  return fallback;
+  return fallbackLevel;
 }
 
 function mapSupabaseUserToAuthenticatedUser(supabaseUser: SupabaseUser): AuthenticatedUser {
@@ -59,16 +73,18 @@ function mapSupabaseUserToAuthenticatedUser(supabaseUser: SupabaseUser): Authent
     name: metadata.name || fallbackName,
     role: metadata.role || 'student',
     hasCompletedOnboarding: Boolean(metadata.hasCompletedOnboarding),
-    aiLanguageLevel: parseBoundedScaleLevel(metadata.aiLanguageLevel, 3),
-    aiDetailLevel: parseBoundedScaleLevel(metadata.aiDetailLevel, 3),
+    aiLanguageLevel: parseBoundedScaleLevel(metadata.aiLanguageLevel),
+    aiDetailLevel: parseBoundedScaleLevel(metadata.aiDetailLevel),
     highContrast: Boolean(metadata.highContrast),
     avatarUrl: typeof metadata.avatarUrl === 'string' ? metadata.avatarUrl : undefined,
   };
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordRecoveryFlow, setIsPasswordRecoveryFlow] = useState(hasRecoveryUrlSignal);
   const supabase = createClient();
 
   useEffect(() => {
@@ -96,7 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsPasswordRecoveryFlow(true);
+        if (typeof window !== 'undefined' && window.location.pathname === '/') {
+          router.replace('/reset-password');
+        }
+      }
       if (!session?.user) {
         setUser(null);
         setLoading(false);
@@ -128,23 +150,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserProfile = async (updates: UserProfileUpdates): Promise<boolean> => {
     if (!user) return false;
 
+    const previousUserSnapshot = user;
     setUser((previousUser) => (previousUser ? { ...previousUser, ...updates } : null));
 
     try {
       const { error } = await supabase.auth.updateUser({ data: updates });
       if (error) {
         console.error('Erro ao atualizar perfil do usuário no Supabase:', error.message);
+        setUser(previousUserSnapshot);
         return false;
       }
       return true;
     } catch (unexpectedError) {
       console.error('Falha inesperada ao atualizar perfil do usuário:', unexpectedError);
+      setUser(previousUserSnapshot);
       return false;
     }
   };
 
   const completeOnboarding = async (): Promise<void> => {
     if (!user) return;
+
+    const previousUserSnapshot = user;
     setUser({ ...user, hasCompletedOnboarding: true });
 
     try {
@@ -153,22 +180,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) {
         console.error('Erro ao atualizar status de onboarding no Supabase:', error.message);
+        setUser(previousUserSnapshot);
       }
     } catch (unexpectedError) {
       console.error('Falha inesperada ao atualizar onboarding:', unexpectedError);
+      setUser(previousUserSnapshot);
     }
+  };
+
+  const clearPasswordRecoveryFlow = (): void => {
+    setIsPasswordRecoveryFlow(false);
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, setUser, logout, completeOnboarding, updateUserProfile }}
+      value={{
+        user,
+        loading,
+        isPasswordRecoveryFlow,
+        clearPasswordRecoveryFlow,
+        setUser,
+        logout,
+        completeOnboarding,
+        updateUserProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

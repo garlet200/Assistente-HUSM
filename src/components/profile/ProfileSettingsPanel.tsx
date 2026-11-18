@@ -6,22 +6,25 @@
  * Preferências de IA/Acessibilidade e Sessão), reutilizável em /profile e no layout desktop.
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Camera, LogOut, User as UserIcon } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth, type UserRoleOption } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { UserRoleSelector } from '@/components/common/UserRoleSelector';
+import { isValidUserName, USER_NAME_MIN_LENGTH } from '@/lib/utils/authValidation';
 import { maskEmailAddress } from '@/lib/utils/formatters';
 import { AiPreferencesControl } from './AiPreferencesControl';
+import { PasswordUpdateCard } from './PasswordUpdateCard';
 import styles from './ProfileSettingsPanel.module.css';
 
-function extractUserInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+function extractUserInitials(fullName: string): string {
+  const nameWords = fullName.trim().split(/\s+/).filter(Boolean);
+  if (nameWords.length === 0) return '';
+  if (nameWords.length === 1) return nameWords[0].slice(0, 2).toUpperCase();
+  return `${nameWords[0][0]}${nameWords[nameWords.length - 1][0]}`.toUpperCase();
 }
 
 export function ProfileSettingsPanel() {
@@ -29,7 +32,7 @@ export function ProfileSettingsPanel() {
   const { user, logout, updateUserProfile } = useAuth();
 
   const [nameInput, setNameInput] = useState(user?.name ?? '');
-  const [roleInput, setRoleInput] = useState<'student' | 'doctor'>(user?.role ?? 'student');
+  const [roleInput, setRoleInput] = useState<UserRoleOption>(user?.role ?? 'student');
   const [isSaving, setIsSaving] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(
     null
@@ -42,21 +45,27 @@ export function ProfileSettingsPanel() {
 
   const handleSaveProfile = async (): Promise<void> => {
     const trimmedName = nameInput.trim();
-    if (!trimmedName) {
-      setSaveFeedback({ type: 'error', text: 'Informe um nome válido antes de salvar.' });
+    if (!isValidUserName(trimmedName)) {
+      setSaveFeedback({
+        type: 'error',
+        text: `Informe um nome com pelo menos ${USER_NAME_MIN_LENGTH} caracteres antes de salvar.`,
+      });
       return;
     }
 
     setIsSaving(true);
     setSaveFeedback(null);
 
-    const updated = await updateUserProfile({ name: trimmedName, role: roleInput });
-    setSaveFeedback(
-      updated
-        ? { type: 'success', text: 'Alterações salvas com sucesso.' }
-        : { type: 'error', text: 'Não foi possível salvar as alterações.' }
-    );
-    setIsSaving(false);
+    try {
+      const wasProfileUpdated = await updateUserProfile({ name: trimmedName, role: roleInput });
+      setSaveFeedback(
+        wasProfileUpdated
+          ? { type: 'success', text: 'Alterações salvas com sucesso.' }
+          : { type: 'error', text: 'Não foi possível salvar as alterações.' }
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = async (): Promise<void> => {
@@ -100,30 +109,15 @@ export function ProfileSettingsPanel() {
 
           <div className={styles.roleSection}>
             <span className={styles.roleLabel}>Perfil de Atuação</span>
-            <div className={styles.roleButtonsRow}>
-              <Button
-                type="button"
-                variant={roleInput === 'student' ? 'primary' : 'default'}
-                onClick={() => {
-                  setRoleInput('student');
-                  setSaveFeedback(null);
-                }}
-                className={styles.roleButton}
-              >
-                Estudante
-              </Button>
-              <Button
-                type="button"
-                variant={roleInput === 'doctor' ? 'primary' : 'default'}
-                onClick={() => {
-                  setRoleInput('doctor');
-                  setSaveFeedback(null);
-                }}
-                className={styles.roleButton}
-              >
-                Profissional
-              </Button>
-            </div>
+            <UserRoleSelector
+              selectedRole={roleInput}
+              onSelectRole={(nextRole) => {
+                setRoleInput(nextRole);
+                setSaveFeedback(null);
+              }}
+              className={styles.roleButtonsRow}
+              buttonClassName={styles.roleButton}
+            />
             <p className={styles.roleNote}>
               Nota: nesta fase de protótipo a troca é livre; futuramente a alteração para o perfil
               Profissional será restrita a pessoal autorizado.
@@ -132,6 +126,7 @@ export function ProfileSettingsPanel() {
 
           {saveFeedback && (
             <p
+              role={saveFeedback.type === 'error' ? 'alert' : 'status'}
               className={
                 saveFeedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError
               }
@@ -144,7 +139,7 @@ export function ProfileSettingsPanel() {
             type="button"
             variant="primary"
             onClick={() => void handleSaveProfile()}
-            disabled={isSaving || !nameInput.trim()}
+            disabled={isSaving || !isValidUserName(nameInput)}
           >
             {isSaving ? 'Salvando...' : 'Salvar Alterações'}
           </Button>
@@ -155,6 +150,8 @@ export function ProfileSettingsPanel() {
         <h2 className={styles.sectionHeading}>Preferências do Assistente e Acessibilidade</h2>
         <AiPreferencesControl />
       </Card>
+
+      <PasswordUpdateCard />
 
       <Card variant="out">
         <Button type="button" className={styles.logoutButton} onClick={() => void handleLogout()}>

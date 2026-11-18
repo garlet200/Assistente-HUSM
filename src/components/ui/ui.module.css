@@ -154,3 +154,66 @@
 .inputPill::placeholder {
   color: var(--color-semantic-text-textlight);
 }
+
+.inputFieldContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.inputWithOneAdornment {
+  padding-right: calc(var(--spacing-max) + var(--spacing-sm));
+}
+
+.inputWithTwoAdornments {
+  padding-right: calc(var(--spacing-max) * 2 + var(--spacing-min));
+}
+
+.inputAdornments {
+  position: absolute;
+  right: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-min);
+}
+
+.validationIconValid {
+  color: var(--color-primitive-general-succes-3);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.validationIconInvalid {
+  color: var(--color-primitive-general-error);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.passwordToggleBtn {
+  border: none;
+  background: transparent;
+  color: var(--color-semantic-text-textlight);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-min);
+  border-radius: var(--radius-radius-small);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.passwordToggleBtn:hover {
+  color: var(--color-semantic-text-textdark);
+}
+
+.passwordToggleBtn:focus-visible {
+  outline: var(--strokewidth-md) solid var(--color-semantic-accent-accentprimary);
+  outline-offset: 1px;
+}
+
+.helperTextInvalid {
+  color: var(--color-primitive-general-error);
+}
