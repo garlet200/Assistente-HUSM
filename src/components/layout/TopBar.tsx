@@ -100,12 +100,12 @@ export function TopBar() {
             </button>
           )}
           <div className={shellStyles.topBarBrandDesktop}>
-            <BrandLogo variant="icon" size="md" />
+            <BrandLogo variant="full" height={52} />
           </div>
         </div>
 
         <div className={shellStyles.topBarBrandMobile}>
-          <BrandLogo variant="icon" size="md" />
+          <BrandLogo variant="icon" height={52} />
         </div>
 
         <nav className={shellStyles.desktopOnlyNav} aria-label="Navegação Principal">
