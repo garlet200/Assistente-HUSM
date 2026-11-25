@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, type UserRoleOption } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import {
   AuthCardForm,
   type AuthFeedback,
@@ -234,17 +235,20 @@ export default function Home() {
 
   return (
     <main className="auth-page-container">
-      <div style={{ textAlign: 'center', marginBottom: 'var(--spacing-max)' }}>
-        <h1
-          style={{
-            fontSize: '2.5rem',
-            fontWeight: 'var(--typography-fontweights-bold)',
-            color: 'var(--color-semantic-accent-accentprimary)',
-          }}
-        >
-          MedHUSM
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 'var(--spacing-sm)',
+          textAlign: 'center',
+          marginBottom: 'var(--spacing-max)',
+        }}
+      >
+        <h1 style={{ margin: 0, display: 'inline-flex', justifyContent: 'center' }}>
+          <BrandLogo size="lg" />
         </h1>
-        <p style={{ color: 'var(--color-semantic-text-textlight)' }}>
+        <p style={{ margin: 0, color: 'var(--color-semantic-text-textlight)' }}>
           Assistente Clínico Inteligente
         </p>
       </div>

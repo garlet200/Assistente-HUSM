@@ -11,6 +11,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, User, Info } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { AppInfoModal } from '@/components/common/AppInfoModal';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { maskEmailAddress } from '@/lib/utils/formatters';
 import { NAVIGATION_TAB_ITEMS, resolveTabDestinationPath } from './BottomNav';
 import { UserProfileDropdown } from './UserProfileDropdown';
@@ -98,10 +99,14 @@ export function TopBar() {
               <ArrowLeft size={20} />
             </button>
           )}
-          <span className={shellStyles.topBarBrandDesktop}>MedHUSM</span>
+          <div className={shellStyles.topBarBrandDesktop}>
+            <BrandLogo variant="icon" size="md" />
+          </div>
         </div>
 
-        <div className={shellStyles.topBarBrandMobile}>MedHUSM</div>
+        <div className={shellStyles.topBarBrandMobile}>
+          <BrandLogo variant="icon" size="md" />
+        </div>
 
         <nav className={shellStyles.desktopOnlyNav} aria-label="Navegação Principal">
           {NAVIGATION_TAB_ITEMS.map((tabItem) => {

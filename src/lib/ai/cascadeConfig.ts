@@ -3,12 +3,12 @@
  * @description Configuração centralizada e legível para humanos do subsistema de IA:
  * 1. Limites de taxa por usuário e janela de contexto para conversas longas;
  * 2. Limites de consumo de tokens do provedor de contingência DeepSeek;
- * 3. Fila de cascata de 4 níveis (Gemini -> Gemini Lite -> Gemini Lite -> DeepSeek) e timeouts.
+ * 3. Fila de cascata de 3 níveis (Gemini 3.5 Flash-Lite -> Gemini 3.1 Flash-Lite -> DeepSeek) e timeouts.
  */
 
 export type AIProviderId = 'gemini' | 'deepseek';
-export type ModelTier = 'primary' | 'fallback_1' | 'fallback_2' | 'fallback_3';
-export type ReliabilityLevel = 'high' | 'standard' | 'reduced' | 'contingency';
+export type ModelTier = 'primary' | 'fallback_1' | 'fallback_2';
+export type ReliabilityLevel = 'high' | 'standard' | 'reduced';
 
 export interface ModelTierConfig {
   tier: ModelTier;
@@ -67,7 +67,7 @@ export const DEEPSEEK_TOKEN_LIMITS = {
 } as const;
 
 // ============================================================================
-// BLOCO 3 — TIMEOUTS E FILA DE CASCATA EM 4 NÍVEIS (FAIL-FAST)
+// BLOCO 3 — TIMEOUTS E FILA DE CASCATA EM 3 NÍVEIS (FAIL-FAST)
 // ============================================================================
 
 /** Tempo máximo para extração de termos PubMed (prioridade crítica do sistema RAG). */
@@ -81,12 +81,12 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
   {
     tier: 'primary',
     provider: 'gemini',
-    defaultModelId: 'gemini-3.8-flash',
+    defaultModelId: 'gemini-3.5-flash-lite',
     envVarKey: 'GEMINI_MODEL_PRIMARY',
-    displayName: 'Gemini 3.8 Flash',
+    displayName: 'Gemini 3.5 Flash-Lite',
     badgeLabel: 'Modelo Principal',
     description:
-      'Prioridade máxima e alta capacidade analítica. Responde a todas as consultas normais.',
+      'Prioridade máxima com alta velocidade de resposta. Responde a todas as consultas normais.',
     reliability: {
       level: 'high',
       label: 'Alta confiabilidade',
@@ -97,12 +97,12 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
   {
     tier: 'fallback_1',
     provider: 'gemini',
-    defaultModelId: 'gemini-3.5-flash-lite',
+    defaultModelId: 'gemini-3.1-flash-lite',
     envVarKey: 'GEMINI_MODEL_FALLBACK_1',
-    displayName: 'Gemini 3.5 Flash-Lite',
+    displayName: 'Gemini 3.1 Flash-Lite',
     badgeLabel: 'Fallback 1',
     description:
-      'Acionado imediatamente caso o modelo principal exceda 15s ou sofra indisponibilidade. Alta velocidade de resposta.',
+      'Acionado imediatamente caso o modelo principal exceda 15s ou sofra indisponibilidade. Baixa latência.',
     reliability: {
       level: 'standard',
       label: 'Confiabilidade padrão',
@@ -112,32 +112,16 @@ export const CASCADE_CONFIG: ModelTierConfig[] = [
   },
   {
     tier: 'fallback_2',
-    provider: 'gemini',
-    defaultModelId: 'gemini-3.1-flash-lite',
-    envVarKey: 'GEMINI_MODEL_FALLBACK_2',
-    displayName: 'Gemini 3.1 Flash-Lite',
-    badgeLabel: 'Fallback 2',
-    description:
-      'Segundo nível de contingência Gemini para absorver picos de demanda com baixa latência (timeout de 12s).',
-    reliability: {
-      level: 'reduced',
-      label: 'Confiabilidade reduzida',
-      badgeVisible: true,
-    },
-    timeoutMs: 12000,
-  },
-  {
-    tier: 'fallback_3',
     provider: 'deepseek',
     defaultModelId: 'deepseek-flash',
-    envVarKey: 'DEEPSEEK_MODEL_FALLBACK_3',
+    envVarKey: 'DEEPSEEK_MODEL_FALLBACK_2',
     displayName: 'DeepSeek Flash',
-    badgeLabel: 'Fallback 3',
+    badgeLabel: 'Fallback 2',
     description:
       'Contingência externa final (DeepSeek API) com controle de tokens para garantir resposta mesmo em queda global do Gemini.',
     reliability: {
-      level: 'contingency',
-      label: 'Contingência externa',
+      level: 'reduced',
+      label: 'Confiabilidade reduzida',
       badgeVisible: true,
     },
     timeoutMs: 15000,
@@ -157,7 +141,7 @@ export function getTierConfig(tier: ModelTier): ModelTierConfig | undefined {
 export function getModelIdForTier(tier: ModelTier): string {
   const tierConfig = getTierConfig(tier);
   if (!tierConfig) {
-    return 'gemini-3.8-flash';
+    return 'gemini-3.5-flash-lite';
   }
 
   const envOverride = process.env[tierConfig.envVarKey];

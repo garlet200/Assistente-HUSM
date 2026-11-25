@@ -106,13 +106,11 @@
 }
 
 .topBarBrandMobile {
-  font-weight: var(--typography-fontweights-semibold);
-  color: var(--color-semantic-text-textdark);
-  font-size: var(--typography-fontsizes-subheading);
-  font-family: var(--typography-fontfamilies-mainmono);
-  font-style: italic;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: 1;
+  min-width: 0;
 }
 
 .topBarBrandDesktop {
@@ -139,12 +137,9 @@
   }
 
   .topBarBrandDesktop {
-    display: block;
-    font-weight: var(--typography-fontweights-semibold);
-    color: var(--color-semantic-text-textdark);
-    font-size: var(--typography-fontsizes-subheading);
-    font-family: var(--typography-fontfamilies-mainmono);
-    font-style: italic;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   .desktopOnlyNav {

@@ -7,11 +7,11 @@
  */
 
 import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { Loader2, MoreVertical } from 'lucide-react';
 import { ChatCitationList } from './ChatCitationList';
 import { ReliabilityBadge } from './ReliabilityBadge';
 import { ActionPopupModal } from '@/components/common/ActionPopupModal';
+import { ClinicalMarkdownRenderer } from '@/components/common/ClinicalMarkdownRenderer';
 import { buildCardExportPopupActions } from '@/components/common/cardExportActions';
 import { RetryActionButton } from '@/components/common/RetryActionButton';
 import { ModelTier, ReliabilityLevel } from '@/lib/ai/cascadeConfig';
@@ -158,9 +158,7 @@ export function ChatInteractionCard({
             modelDisplayName={interaction.modelDisplayName}
           />
         </div>
-        <div style={{ fontFamily: 'var(--typography-fontfamilies-mainserif)', lineHeight: '1.6', whiteSpace: 'pre-wrap', color: 'var(--color-semantic-text-textdark)' }}>
-          <ReactMarkdown>{mainContentText}</ReactMarkdown>
-        </div>
+        <ClinicalMarkdownRenderer content={mainContentText} />
         <SuggestionsListSection suggestionTopics={suggestionTopics} onSendSuggestion={onSendSuggestion} />
         {isRetryableResponse(interaction.response) && (
           <RetryActionButton onRetry={() => onRetry(interaction)} />

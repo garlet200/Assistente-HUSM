@@ -7,10 +7,10 @@
  */
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
 import { Loader2 } from 'lucide-react';
 import { MultipleChoiceQuestion } from './MultipleChoiceQuestion';
 import { ReliabilityBadge } from '@/components/chat/ReliabilityBadge';
+import { ClinicalMarkdownRenderer } from '@/components/common/ClinicalMarkdownRenderer';
 import { RetryActionButton } from '@/components/common/RetryActionButton';
 import { ModelTier, ReliabilityLevel } from '@/lib/ai/cascadeConfig';
 import { isRetryableResponse } from '@/lib/utils/formatters';
@@ -106,16 +106,7 @@ export function StudySimulationCard({
 
     return (
       <>
-        <div
-          style={{
-            fontFamily: 'var(--typography-fontfamilies-mainserif)',
-            lineHeight: '1.6',
-            whiteSpace: 'pre-wrap',
-            color: 'var(--color-semantic-text-textdark)',
-          }}
-        >
-          <ReactMarkdown>{studyMessage.content}</ReactMarkdown>
-        </div>
+        <ClinicalMarkdownRenderer content={studyMessage.content} />
 
         {isRetryableResponse(studyMessage.content) && (
           <RetryActionButton onRetry={() => onRetryInteraction(studyMessage.id)} />

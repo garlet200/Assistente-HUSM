@@ -117,6 +117,7 @@
   --typography-lineheights-display-heading: 1.2;
   --typography-lineheights-body-caption: 1.5;
   --typography-lineheights-default: 1.5;
+  --typography-lineheights-reading: 1.65;
 
   --typography-letterspacing-default: 0px;
   --typography-letterspacing-badge: -1px;
@@ -127,6 +128,11 @@
   --spacing-md-lg: 20px;
   --spacing-lg: 24px;
   --spacing-max: 32px;
+  --spacing-prose-paragraph: var(--spacing-md);
+  --spacing-prose-heading-top: var(--spacing-lg);
+  --spacing-prose-heading-bottom: var(--spacing-sm);
+  --spacing-prose-list-item: var(--spacing-sm);
+  --spacing-prose-block: var(--spacing-md-lg);
 
   --opacity-low: 0.1;
   --opacity-md: 0.5;
@@ -148,7 +154,4 @@
   --strokewidth-min: 1px;
   --strokewidth-md: 2px;
   --strokewidth-max: 4px;
-  --spacing-min: 4px;
-  --spacing-md: 16px;
-  --spacing-max: 32px;
 }

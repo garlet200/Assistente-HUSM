@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { PasswordUpdateCard } from '@/components/profile/PasswordUpdateCard';
 import { createClient } from '@/lib/supabase/client';
 
@@ -149,17 +150,21 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="auth-page-container">
-      <div style={{ textAlign: 'center' }}>
-        <h1
-          style={{
-            fontSize: 'var(--typography-fontsizes-heading)',
-            fontWeight: 'var(--typography-fontweights-bold)',
-            color: 'var(--color-semantic-accent-accentprimary)',
-          }}
-        >
-          MedHUSM
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 'var(--spacing-sm)',
+          textAlign: 'center',
+        }}
+      >
+        <h1 style={{ margin: 0, display: 'inline-flex', justifyContent: 'center' }}>
+          <BrandLogo size="md" />
         </h1>
-        <p style={{ color: 'var(--color-semantic-text-textlight)' }}>Recuperação de Conta</p>
+        <p style={{ margin: 0, color: 'var(--color-semantic-text-textlight)' }}>
+          Recuperação de Conta
+        </p>
       </div>
 
       <PasswordUpdateCard

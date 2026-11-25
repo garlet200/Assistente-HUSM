@@ -1,7 +1,7 @@
 /**
  * @file router.ts
  * @description Orquestrador central de IA (AIOrchestrator) que coordena anonimização LGPD (Privacy Gate),
- * limitação de histórico, enriquecimento PubMed RAG e execução fail-fast em cascata de 4 níveis.
+ * limitação de histórico, enriquecimento PubMed RAG e execução fail-fast em cascata de 3 níveis.
  */
 
 import { AIProvider, AIRequest, AIResponse } from './types';
@@ -27,7 +27,7 @@ import { searchPubMed } from './pubmed';
 import { buildAssistenteHusmSystemInstruction, buildPubMedExtractionPrompt } from './prompts';
 import { limitConversationHistory } from './rateLimiter';
 
-const PUBMED_EXTRACTION_TIERS: readonly ModelTier[] = ['fallback_1', 'fallback_2', 'fallback_3'];
+const PUBMED_EXTRACTION_TIERS: readonly ModelTier[] = ['fallback_1', 'fallback_2'];
 
 interface TierExecutionParams {
   safeRequest: AIRequest;

@@ -114,9 +114,13 @@ export function buildAssistenteHusmSystemInstruction(
   ].join('\n');
 
   const chatOutputFormat = [
-    'FORMATO - CRITÉRIOS DE SUCESSO',
-    '1. Linguagem e Profundidade: Siga estritamente as preferências de Teor da Linguagem e Grau de Detalhes definidas acima, evitando uso excessivo de formatação Markdown (use negrito apenas para o estritamente necessário).',
-    '2. Aviso Obrigatório (Disclaimer): Toda resposta DEVE ser finalizada exatamente com o seguinte texto:',
+    'FORMATO - CRITÉRIOS EDITORIAIS DE RESPOSTA (TUFTE / UPTODATE)',
+    '1. Linguagem e Profundidade: Siga estritamente as preferências de Teor da Linguagem e Grau de Detalhes definidas acima.',
+    '2. Subtítulos (## e ###): Organize a resposta em seções clínicas claras (ex.: ## Fisiopatologia, ## Quadro Clínico, ## Diagnóstico Diferencial, ## Conduta) sempre que o Grau de Detalhes permitir (especialmente níveis 2 a 5).',
+    '3. Tabelas Comparativas (GFM | Coluna | Coluna |): Utilize tabelas Markdown sempre que comparar diagnósticos diferenciais, classes farmacológicas, posologias, critérios ou parâmetros laboratoriais.',
+    '4. Blocos de Alerta Clínico (>): Utilize citações (>) exclusivamente para destacar sinais de alarme (Red Flags), contraindicações críticas ou notas de segurança clínica.',
+    '5. Listas e Código Inline: Use listas (- ou 1.) para critérios objetivos ou passos sequenciais e crases (`) para escores, fórmulas ou códigos técnicos, mantendo os parágrafos em prosa fluida sem poluição excessiva de negrito.',
+    '6. Aviso Obrigatório (Disclaimer): Toda resposta DEVE ser finalizada exatamente com o seguinte texto:',
     `"${MANDATORY_CLINICAL_DISCLAIMER}"`,
   ].join('\n');
 

@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { ClinicalMarkdownRenderer } from '@/components/common/ClinicalMarkdownRenderer';
 import styles from './MultipleChoiceQuestion.module.css';
 
 interface MultipleChoiceQuestionProps {
@@ -36,7 +36,7 @@ export function MultipleChoiceQuestion({
   return (
     <div className={styles.container}>
       <div className={styles.questionContent}>
-        <ReactMarkdown>{question}</ReactMarkdown>
+        <ClinicalMarkdownRenderer content={question} />
       </div>
 
       <div className={styles.optionsList}>

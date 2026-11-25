@@ -229,22 +229,6 @@ input:focus-visible {
   }
 }
 
-
-/* Markdown defaults within message bubbles */
-p {
-  margin-bottom: var(--spacing-sm);
-}
-p:last-child {
-  margin-bottom: 0;
-}
-strong {
-  font-weight: 700;
-}
-ul, ol {
-  margin-left: var(--spacing-lg);
-  margin-bottom: var(--spacing-sm);
-}
-
 /* Dev Layout X-Ray Outlines (zero layout shift via outline) */
 html[data-dev-mode="true"]:not([data-dev-outlines="false"]) [data-dev-flex="true"] {
   outline: 1px dotted rgba(33, 150, 243, 0.65) !important;

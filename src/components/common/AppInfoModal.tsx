@@ -7,8 +7,9 @@
  */
 
 import React, { useEffect } from 'react';
-import { Info, X, ShieldAlert, Layers } from 'lucide-react';
+import { X, ShieldAlert, Layers } from 'lucide-react';
 import { ReliabilityBadge } from '@/components/chat/ReliabilityBadge';
+import { BrandLogo } from '@/components/common/BrandLogo';
 import { Button } from '@/components/ui/Button';
 import { CASCADE_CONFIG } from '@/lib/ai/cascadeConfig';
 import { MANDATORY_CLINICAL_DISCLAIMER } from '@/lib/ai/prompts';
@@ -25,7 +26,7 @@ function ModalHeader({ onClose }: { onClose: () => void }) {
     <div className={styles.header}>
       <div className={styles.headerTitleGroup}>
         <div className={styles.headerIconBadge}>
-          <Info size={18} />
+          <BrandLogo variant="icon" height={20} decorative />
         </div>
         <h2 id="app-info-title" className={styles.headerTitle}>
           Sobre o MedHUSM

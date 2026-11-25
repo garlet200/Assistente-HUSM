@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 355.4 575.28">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #195ed8;
+      }
+
+      .cls-2 {
+        fill: #7295d2;
+      }
+
+      .cls-3 {
+        fill: url(#Gradiente_sem_nome_15-2);
+      }
+
+      .cls-4 {
+        fill: url(#Gradiente_sem_nome_15);
+      }
+
+      .cls-5 {
+        fill: url(#Gradiente_sem_nome_15-3);
+      }
+    </style>
+    <linearGradient id="Gradiente_sem_nome_15" data-name="Gradiente sem nome 15" x1="0" y1="231.17" x2="353.94" y2="231.17" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#36335f"/>
+      <stop offset=".5" stop-color="#005176"/>
+    </linearGradient>
+    <linearGradient id="Gradiente_sem_nome_15-2" data-name="Gradiente sem nome 15" x1="1.47" y1="352.13" x2="355.4" y2="352.13" xlink:href="#Gradiente_sem_nome_15"/>
+    <linearGradient id="Gradiente_sem_nome_15-3" data-name="Gradiente sem nome 15" x1="61.11" y1="445.18" x2="286.51" y2="445.18" xlink:href="#Gradiente_sem_nome_15"/>
+  </defs>
+  <g id="Camada_2-2" data-name="Camada 2">
+    <g>
+      <polygon class="cls-4" points="21.85 201.04 337.12 207.47 353.94 253.67 0 261.31 21.85 201.04"/>
+      <polygon class="cls-3" points="355.4 322 1.47 329.64 18.28 375.83 333.55 382.27 355.4 322"/>
+      <polygon class="cls-5" points="116.53 461.26 61.11 429.11 286.51 455.1 116.53 461.26"/>
+      <path class="cls-2" d="M194.44,40.37c4.17,96.03,45.56,175.12,80.81,204.13,7.65,6.3,7.98,17.78.85,24.66-36.24,34.99-80.09,42-81.94,289.75-.07,9.05-7.41,16.37-16.46,16.37h0c-9.05,0-16.39-7.31-16.46-16.36-2.01-248.65-49.75-255.58-84.54-290.14-6.84-6.79-6.46-17.93.86-24.2,33.66-28.84,78.86-107.6,83.38-204.28.41-8.8,7.63-15.73,16.43-15.73h.64c8.83,0,16.05,6.97,16.44,15.79Z"/>
+      <path class="cls-1" d="M1.47,329.64c3.5,16.33,9.22,31.84,16.82,46.2l335.65-122.17c-3.5-16.33-9.22-31.84-16.82-46.2L1.47,329.64Z"/>
+      <path class="cls-1" d="M116.53,461.26l217.02-78.99c10.66-18.29,18.18-38.62,21.85-60.27L61.11,429.11c16.25,13.8,34.98,24.77,55.42,32.14Z"/>
+      <circle class="cls-2" cx="177.7" cy="24.58" r="24.58"/>
+      <path class="cls-1" d="M294.3,154.19c-16.25-13.8-34.98-24.77-55.42-32.14L21.85,201.04c-10.66,18.29-18.18,38.62-21.85,60.27l218.24-79.43h45.48l30.57-27.68Z"/>
+    </g>
+  </g>
+</svg>
