@@ -206,7 +206,7 @@ export class AIOrchestrator {
   }
 
   /**
-   * Main request processing entrypoint with LGPD privacy gating, context trimming, PubMed RAG, and 4-tier cascade.
+   * Main request processing entrypoint with LGPD privacy gating, context trimming, PubMed RAG, and 3-tier cascade.
    */
   async processRequest(request: AIRequest): Promise<AIResponse> {
     const isJsonFormat = request.responseFormat === 'json';

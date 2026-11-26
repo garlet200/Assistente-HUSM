@@ -99,12 +99,20 @@ export function TopBar() {
               <ArrowLeft size={20} />
             </button>
           )}
-          <div className={shellStyles.topBarBrandDesktop}>
+          <div
+            className={shellStyles.topBarBrandDesktop}
+            data-dev-mode-trigger="true"
+            style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+          >
             <BrandLogo variant="full" height={52} />
           </div>
         </div>
 
-        <div className={shellStyles.topBarBrandMobile}>
+        <div
+          className={shellStyles.topBarBrandMobile}
+          data-dev-mode-trigger="true"
+          style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+        >
           <BrandLogo variant="icon" height={52} />
         </div>
 

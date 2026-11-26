@@ -7,7 +7,7 @@
  */
 
 import { type FormEvent, useState } from 'react';
-import { Card } from '@/components/ui/Card';
+import { Card, type CardElevation } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input, type InputValidationState } from '@/components/ui/Input';
 import { PasswordCriteriaChecklist } from '@/components/auth/PasswordCriteriaChecklist';
@@ -19,6 +19,7 @@ interface PasswordUpdateCardProps {
   title?: string;
   subtitle?: string;
   submitLabel?: string;
+  cardElevation?: CardElevation;
   onSuccess?: () => void;
 }
 
@@ -50,6 +51,7 @@ export function PasswordUpdateCard({
   title = 'Segurança e Senha',
   subtitle,
   submitLabel = 'Atualizar Senha',
+  cardElevation = 'large',
   onSuccess,
 }: PasswordUpdateCardProps) {
   const [newPassword, setNewPassword] = useState('');
@@ -96,7 +98,7 @@ export function PasswordUpdateCard({
   };
 
   return (
-    <Card variant="out">
+    <Card variant="out" elevation={cardElevation}>
       <h2 className={styles.sectionHeading}>{title}</h2>
       {subtitle && <p className={styles.roleNote}>{subtitle}</p>}
 

@@ -75,7 +75,7 @@ export function ProfileSettingsPanel() {
 
   return (
     <div className={styles.panelWrapper}>
-      <Card variant="out">
+      <Card variant="out" elevation="flat">
         <h2 className={styles.sectionHeading}>Informações da Conta</h2>
 
         <div className={styles.accountFormGroup}>
@@ -146,14 +146,14 @@ export function ProfileSettingsPanel() {
         </div>
       </Card>
 
-      <Card variant="out" id="preferencias">
+      <Card variant="out" elevation="flat" id="preferencias">
         <h2 className={styles.sectionHeading}>Preferências do Assistente e Acessibilidade</h2>
         <AiPreferencesControl />
       </Card>
 
-      <PasswordUpdateCard />
+      <PasswordUpdateCard cardElevation="flat" />
 
-      <Card variant="out">
+      <Card variant="out" elevation="flat">
         <Button type="button" className={styles.logoutButton} onClick={() => void handleLogout()}>
           <LogOut size={18} />
           <span>Sair da Conta</span>

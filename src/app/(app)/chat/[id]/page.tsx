@@ -7,7 +7,7 @@
  */
 
 import React, { use } from 'react';
-import { Loader2, ArrowDown, Send } from 'lucide-react';
+import { Loader2, ArrowDown, Send, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { ChatInteractionCard } from '@/components/chat/ChatInteractionCard';
 import { EditableSessionHeader } from '@/components/common/EditableSessionHeader';
@@ -24,6 +24,7 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
     isLoadingResponse,
     isFetchingHistory,
     shouldShowScrollButton,
+    privacyRedactionNotice,
     chatTitle,
     setChatTitle,
     endOfMessagesRef,
@@ -178,6 +179,29 @@ export default function ChatSession({ params }: { params: Promise<{ id: string }
       </div>
 
       <footer className="chat-footer">
+        {privacyRedactionNotice && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-sm)',
+              marginBottom: 'var(--spacing-sm)',
+              padding: 'var(--spacing-sm) var(--spacing-ml)',
+              borderRadius: 'var(--radius-radius-small)',
+              backgroundColor: 'var(--color-semantic-backgroundcolor-backgrounddimmer)',
+              color: 'var(--color-semantic-text-textlight)',
+              fontSize: 'var(--typography-fontsizes-caption)',
+            }}
+          >
+            <ShieldCheck size={15} style={{ flexShrink: 0, color: 'var(--color-semantic-accent-accentprimary)' }} />
+            <span>
+              Dados sensíveis do paciente foram ocultados automaticamente no seu dispositivo antes de
+              salvar ou enviar.
+            </span>
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 'var(--spacing-ml)', alignItems: 'center' }}>
           <Input
             pill

@@ -32,7 +32,7 @@
   height: 84px;
   border-radius: var(--radius-radius-full);
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
-  box-shadow: var(--shadow-extruded-medium);
+  box-shadow: var(--shadow-extruded-flat);
   display: flex;
   align-items: center;
   justify-content: center;

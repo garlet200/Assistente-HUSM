@@ -78,6 +78,14 @@
   padding: var(--spacing-lg);
 }
 
+.cardMedium {
+  box-shadow: var(--shadow-extruded-medium);
+}
+
+.cardFlat {
+  box-shadow: var(--shadow-extruded-flat);
+}
+
 .cardInset {
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
   border-radius: var(--radius-radius-medium);

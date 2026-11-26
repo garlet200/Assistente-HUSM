@@ -164,7 +164,7 @@ export function AuthCardForm(props: AuthCardFormProps) {
     (mode === 'signup' && (!isValidUserName(fullName) || !passwordCriteria.isAllValid));
 
   return (
-    <Card>
+    <Card elevation="flat">
       <form
         onSubmit={(event) => {
           event.preventDefault();

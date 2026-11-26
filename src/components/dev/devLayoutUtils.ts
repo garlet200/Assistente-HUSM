@@ -3,18 +3,9 @@
  * @description Utilitários de inspeção DOM e régua de grid para o Modo Dev Secreto.
  */
 
-export const KONAMI_SEQUENCE = [
-  'ArrowUp',
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowLeft',
-  'ArrowRight',
-  'b',
-  'a',
-] as const;
+export const DEV_MODE_TRIGGER_ATTR = 'data-dev-mode-trigger';
+export const DEV_MODE_CLICK_TARGET = 5;
+export const DEV_MODE_CLICK_WINDOW_MS = 1800;
 
 const DEV_ATTRS = ['data-dev-grid', 'data-dev-flex', 'data-dev-overflow'] as const;
 
@@ -25,12 +16,6 @@ export interface WorkspaceRulerRect {
   height: number;
   padding: string;
   gap: string;
-}
-
-export function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
 }
 
 function toggleAttr(el: Element, attr: string, active: boolean): void {
