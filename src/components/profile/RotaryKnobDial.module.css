@@ -74,7 +74,7 @@
   height: 70px;
   border-radius: var(--radius-radius-full);
   background-color: var(--color-semantic-backgroundcolor-backgrounddefault);
-  box-shadow: var(--shadow-extruded-medium);
+  box-shadow: var(--shadow-extruded-flat);
   position: relative;
   touch-action: none;
   cursor: grab;

@@ -133,7 +133,7 @@ function OnboardingTermsView({
       <h1 style={{ textAlign: 'center', marginBottom: 'var(--spacing-lg)' }}>
         Diretrizes Éticas do HUSM
       </h1>
-      <Card variant="out">
+      <Card variant="out" elevation="flat">
         <p
           style={{
             marginBottom: 'var(--spacing-md)',
@@ -245,7 +245,16 @@ export default function Home() {
           marginBottom: 'var(--spacing-max)',
         }}
       >
-        <h1 style={{ margin: 0, display: 'inline-flex', justifyContent: 'center' }}>
+        <h1
+          data-dev-mode-trigger="true"
+          style={{
+            margin: 0,
+            display: 'inline-flex',
+            justifyContent: 'center',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+          }}
+        >
           <BrandLogo size="lg" />
         </h1>
         <p style={{ margin: 0, color: 'var(--color-semantic-text-textlight)' }}>

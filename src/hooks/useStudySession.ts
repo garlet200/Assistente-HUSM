@@ -32,6 +32,7 @@ import {
   EducationalSimulationJsonPayload,
 } from '@/lib/ai/prompts';
 import { AIRequestHistoryMessage } from '@/lib/ai/types';
+import { deIdentify } from '@/lib/ai/privacyGate';
 import {
   SESSION_STORAGE_KEYS,
   DEFAULT_SESSION_TITLES,
@@ -57,9 +58,9 @@ export function useStudySession(routeSessionId: string) {
   const hasAutoStartedPendingTopicRef = useRef(false);
 
   const handleTitleCommit = async (newTitleText: string): Promise<void> => {
-    const trimmedTitle = newTitleText.trim() || DEFAULT_SESSION_TITLES.STUDY_DEFAULT;
-    setSessionTitle(trimmedTitle);
-    await updateSessionTitleInDatabase(supabase, routeSessionId, trimmedTitle);
+    const sanitizedTitle = deIdentify(newTitleText).trim() || DEFAULT_SESSION_TITLES.STUDY_DEFAULT;
+    setSessionTitle(sanitizedTitle);
+    await updateSessionTitleInDatabase(supabase, routeSessionId, sanitizedTitle);
   };
 
   const persistStudyModelReplyInBackground = async (
@@ -130,24 +131,25 @@ export function useStudySession(routeSessionId: string) {
   };
 
   const handleStartStudy = async (topicToStudy: string): Promise<void> => {
-    setSelectedTopic(topicToStudy);
+    const sanitizedTopic = deIdentify(topicToStudy).trim() || topicToStudy;
+    setSelectedTopic(sanitizedTopic);
     setHasSelectedTopic(true);
     setMessages([]);
     setIsLoadingAiResponse(true);
 
     const titleUpdatePromise =
       routeSessionId !== 'new' && sessionTitle === DEFAULT_SESSION_TITLES.NEW_STUDY
-        ? handleTitleCommit(`Estudo: ${topicToStudy}`)
+        ? handleTitleCommit(`Estudo: ${sanitizedTopic}`)
         : Promise.resolve();
     const userTopicPromise = insertSessionMessageRecord(supabase, {
       sessionId: routeSessionId,
       role: 'user',
-      content: `${STUDY_TOPIC_PROMPT_PREFIX}${topicToStudy}`,
+      content: `${STUDY_TOPIC_PROMPT_PREFIX}${sanitizedTopic}`,
     });
 
     try {
       await requestAndPersistStudyStep({
-        prompt: buildInitialCaseUserPrompt(topicToStudy),
+        prompt: buildInitialCaseUserPrompt(sanitizedTopic),
         systemInstruction: buildInitialCaseSystemInstruction(),
         replaceAllMessages: true,
         precedingDbPromise: Promise.all([titleUpdatePromise, userTopicPromise]),
@@ -202,13 +204,14 @@ export function useStudySession(routeSessionId: string) {
   }, [messages, isLoadingAiResponse]);
 
   const handleAnswerSelect = async (questionMessageId: string, chosenOptionText: string): Promise<void> => {
+    const sanitizedOptionText = deIdentify(chosenOptionText);
     const studyHistory = buildStudyConversationHistory(messages);
     const targetQuestion = messages.find((msg) => msg.id === questionMessageId);
     const temporaryUserAnswerId = crypto.randomUUID();
 
     setMessages((prev) => [
       ...prev.map((msg) => (msg.id === questionMessageId ? { ...msg, answered: true } : msg)),
-      { id: temporaryUserAnswerId, role: 'user', content: chosenOptionText },
+      { id: temporaryUserAnswerId, role: 'user', content: sanitizedOptionText },
     ]);
     setIsLoadingAiResponse(true);
 
@@ -219,7 +222,7 @@ export function useStudySession(routeSessionId: string) {
     const userAnswerPromise = insertSessionMessageRecord(supabase, {
       sessionId: routeSessionId,
       role: 'user',
-      content: chosenOptionText,
+      content: sanitizedOptionText,
     }).then((persisted) => {
       if (persisted) {
         setMessages((prev) => prev.map((m) => (m.id === temporaryUserAnswerId ? { ...m, id: persisted.id } : m)));
@@ -229,7 +232,7 @@ export function useStudySession(routeSessionId: string) {
 
     try {
       await requestAndPersistStudyStep({
-        prompt: buildAnswerEvaluationUserPrompt(chosenOptionText),
+        prompt: buildAnswerEvaluationUserPrompt(sanitizedOptionText),
         systemInstruction: buildAnswerEvaluationSystemInstruction(),
         history: studyHistory,
         precedingDbPromise: Promise.all([metadataUpdatePromise, userAnswerPromise]),

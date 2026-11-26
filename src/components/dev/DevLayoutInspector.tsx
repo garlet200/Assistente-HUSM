@@ -2,15 +2,16 @@
 
 /**
  * @file DevLayoutInspector.tsx
- * @description Modo Dev Secreto (Layout X-Ray Inspector) com ativação por Konami Code, Ctrl+Shift+D ou DevTools.
+ * @description Modo Dev Secreto (Layout X-Ray Inspector) com ativação por 5 cliques seguidos no logo, Ctrl+Shift+D ou DevTools.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { DevHoverOverlay, type InspectedMetrics } from './DevHoverOverlay';
 import {
   clearLayoutOutlineAttributes,
-  isEditableTarget,
-  KONAMI_SEQUENCE,
+  DEV_MODE_CLICK_TARGET,
+  DEV_MODE_CLICK_WINDOW_MS,
+  DEV_MODE_TRIGGER_ATTR,
   readWorkspaceRulerRect,
   syncLayoutOutlineAttributes,
   type WorkspaceRulerRect,
@@ -117,7 +118,8 @@ function DevHudPanel({
 }
 
 function useDevModeTriggers(isOpen: boolean, setIsOpen: React.Dispatch<React.SetStateAction<boolean>>) {
-  const konamiIndexRef = useRef(0);
+  const logoClickCountRef = useRef(0);
+  const lastLogoClickAtRef = useRef(0);
   const isOpenRef = useRef(isOpen);
 
   useEffect(() => {
@@ -156,28 +158,46 @@ function useDevModeTriggers(isOpen: boolean, setIsOpen: React.Dispatch<React.Set
       }
       if (event.key === 'Escape' && isOpenRef.current) {
         setIsOpen(false);
-        return;
       }
-      if (isEditableTarget(event.target) || isEditableTarget(document.activeElement)) {
-        konamiIndexRef.current = 0;
+    };
+
+    const handleDocumentPointerDown = (event: PointerEvent): void => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+      const targetElement = event.target instanceof Element ? event.target : null;
+      const isTriggerPress = Boolean(targetElement?.closest(`[${DEV_MODE_TRIGGER_ATTR}="true"]`));
+      if (!isTriggerPress) {
+        logoClickCountRef.current = 0;
         return;
       }
 
-      const expected = KONAMI_SEQUENCE[konamiIndexRef.current];
-      const normalizedKey = event.key.length === 1 ? event.key.toLowerCase() : event.key;
-      if (normalizedKey === expected) {
-        konamiIndexRef.current += 1;
-        if (konamiIndexRef.current === KONAMI_SEQUENCE.length) {
-          konamiIndexRef.current = 0;
-          toggleDevMode();
-        }
-        return;
+      const now = Date.now();
+      const isWithinWindow = now - lastLogoClickAtRef.current <= DEV_MODE_CLICK_WINDOW_MS;
+      logoClickCountRef.current = isWithinWindow ? logoClickCountRef.current + 1 : 1;
+      lastLogoClickAtRef.current = now;
+
+      if (logoClickCountRef.current >= DEV_MODE_CLICK_TARGET) {
+        logoClickCountRef.current = 0;
+        toggleDevMode();
       }
-      konamiIndexRef.current = normalizedKey === KONAMI_SEQUENCE[0] ? 1 : 0;
+    };
+
+    const handlePreventMultiClickSelection = (event: MouseEvent): void => {
+      if (event.detail <= 1) return;
+      const targetElement = event.target instanceof Element ? event.target : null;
+      if (targetElement?.closest(`[${DEV_MODE_TRIGGER_ATTR}="true"]`)) {
+        event.preventDefault();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('pointerdown', handleDocumentPointerDown);
+    document.addEventListener('mousedown', handlePreventMultiClickSelection);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('pointerdown', handleDocumentPointerDown);
+      document.removeEventListener('mousedown', handlePreventMultiClickSelection);
+    };
   }, [setIsOpen, toggleDevMode]);
 }
 

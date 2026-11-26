@@ -7,16 +7,34 @@
 import React, { HTMLAttributes } from 'react';
 import styles from './ui.module.css';
 
+export type CardElevation = 'large' | 'medium' | 'flat';
+
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'out' | 'in';
+  elevation?: CardElevation;
   children: React.ReactNode;
 }
 
-export function Card({ variant = 'out', children, className, ...props }: CardProps) {
+const ELEVATION_CLASS_MAP: Readonly<Record<CardElevation, string>> = {
+  large: '',
+  medium: styles.cardMedium,
+  flat: styles.cardFlat,
+};
+
+export function Card({
+  variant = 'out',
+  elevation = 'large',
+  children,
+  className,
+  ...props
+}: CardProps) {
   const classNames = [
     variant === 'out' ? styles.card : styles.cardInset,
-    className || ''
-  ].filter(Boolean).join(' ');
+    variant === 'out' ? ELEVATION_CLASS_MAP[elevation] : '',
+    className || '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className={classNames} {...props}>

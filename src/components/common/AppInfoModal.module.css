@@ -84,13 +84,6 @@
   color: var(--color-semantic-text-textdark);
 }
 
-.introCallout {
-  padding: var(--spacing-md);
-  background-color: var(--color-semantic-backgroundcolor-backgrounddimmer);
-  border-radius: var(--radius-radius-medium);
-  border-left: var(--strokewidth-max) solid var(--color-semantic-accent-accentprimary);
-}
-
 .section {
   display: flex;
   flex-direction: column;

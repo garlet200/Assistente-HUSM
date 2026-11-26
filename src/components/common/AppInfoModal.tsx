@@ -152,15 +152,13 @@ export function AppInfoModal({ isOpen, onClose }: AppInfoModalProps) {
         <ModalHeader onClose={onClose} />
 
         <div className={styles.body}>
-          <div className={styles.introCallout}>
-            <p style={{ margin: 0, color: 'var(--color-semantic-text-textdark)' }}>
-              O MedHUSM é um assistente clínico virtual baseado em inteligência artificial,
-              desenvolvido como PWA (aplicativo acessível direto pelo navegador, sem necessidade de
-              instalação). Ele foi projetado para apoiar estudantes de medicina e profissionais de
-              saúde do HUSM-UFSM na consulta de hipóteses diagnósticas, revisão de literatura e
-              atualizações sobre tópicos clínicos durante a rotina hospitalar e de estudos.
-            </p>
-          </div>
+          <p style={{ margin: 0, color: 'var(--color-semantic-text-textdark)' }}>
+            O MedHUSM é um assistente clínico virtual baseado em inteligência artificial,
+            desenvolvido como PWA (aplicativo acessível direto pelo navegador, sem necessidade de
+            instalação). Ele foi projetado para apoiar estudantes de medicina e profissionais de
+            saúde do HUSM-UFSM na consulta de hipóteses diagnósticas, revisão de literatura e
+            atualizações sobre tópicos clínicos durante a rotina hospitalar e de estudos.
+          </p>
 
           <EthicalGuidelinesSection />
           <CascadeReliabilitySection />

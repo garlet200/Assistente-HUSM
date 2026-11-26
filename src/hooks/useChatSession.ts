@@ -24,6 +24,7 @@ import {
   updateSessionTitleInDatabase,
 } from '@/lib/supabase/sessionRepository';
 import { AIRequestHistoryMessage } from '@/lib/ai/types';
+import { deIdentify, deIdentifyWithReport } from '@/lib/ai/privacyGate';
 import { Interaction } from '@/components/chat/ChatInteractionCard';
 import {
   SESSION_STORAGE_KEYS,
@@ -34,6 +35,8 @@ import {
 } from '@/lib/constants/session';
 import { exportConversationAsPdf } from '@/lib/utils/exporters';
 import { ASSISTANT_UNAVAILABLE_MESSAGE } from '@/lib/utils/formatters';
+
+const PRIVACY_NOTICE_DURATION_MS = 6000;
 
 export function useChatSession(routeChatId: string) {
   const router = useRouter();
@@ -47,9 +50,26 @@ export function useChatSession(routeChatId: string) {
   const [isFetchingHistory, setIsFetchingHistory] = useState(routeChatId !== 'new');
   const [shouldShowScrollButton, setShouldShowScrollButton] = useState(false);
   const [chatTitle, setChatTitle] = useState<string>(DEFAULT_SESSION_TITLES.NEW_CHAT);
+  const [privacyRedactionNotice, setPrivacyRedactionNotice] = useState(false);
 
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const mainScrollContainerRef = useRef<HTMLElement>(null);
+  const privacyNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (privacyNoticeTimerRef.current) clearTimeout(privacyNoticeTimerRef.current);
+    };
+  }, []);
+
+  const showPrivacyRedactionNotice = (): void => {
+    setPrivacyRedactionNotice(true);
+    if (privacyNoticeTimerRef.current) clearTimeout(privacyNoticeTimerRef.current);
+    privacyNoticeTimerRef.current = setTimeout(
+      () => setPrivacyRedactionNotice(false),
+      PRIVACY_NOTICE_DURATION_MS
+    );
+  };
 
   useEffect(() => {
     if (!user) {
@@ -91,9 +111,9 @@ export function useChatSession(routeChatId: string) {
   };
 
   const handleTitleCommit = async (newTitleText: string): Promise<void> => {
-    const trimmedTitle = newTitleText.trim() || DEFAULT_SESSION_TITLES.CHAT_FALLBACK;
-    setChatTitle(trimmedTitle);
-    await updateSessionTitleInDatabase(supabase, activeChatId, trimmedTitle);
+    const sanitizedTitle = deIdentify(newTitleText).trim() || DEFAULT_SESSION_TITLES.CHAT_FALLBACK;
+    setChatTitle(sanitizedTitle);
+    await updateSessionTitleInDatabase(supabase, activeChatId, sanitizedTitle);
   };
 
   const updateTargetInteractionInState = (
@@ -194,8 +214,11 @@ export function useChatSession(routeChatId: string) {
   };
 
   const handleSend = async (overridePromptText?: string | React.MouseEvent<HTMLButtonElement>): Promise<void> => {
-    const promptToSend = typeof overridePromptText === 'string' ? overridePromptText : inputPrompt;
-    if (!promptToSend.trim() || isLoadingResponse || !user) return;
+    const rawPrompt = typeof overridePromptText === 'string' ? overridePromptText : inputPrompt;
+    if (!rawPrompt.trim() || isLoadingResponse || !user) return;
+
+    const { sanitizedText: promptToSend, hadRedactions } = deIdentifyWithReport(rawPrompt);
+    if (hadRedactions) showPrivacyRedactionNotice();
 
     const temporaryInteractionId = crypto.randomUUID();
     const conversationHistory = buildConversationHistory(interactions);
@@ -279,6 +302,7 @@ export function useChatSession(routeChatId: string) {
     isLoadingResponse,
     isFetchingHistory,
     shouldShowScrollButton,
+    privacyRedactionNotice,
     chatTitle,
     setChatTitle,
     endOfMessagesRef,
